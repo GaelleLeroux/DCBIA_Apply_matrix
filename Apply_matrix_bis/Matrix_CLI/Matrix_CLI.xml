@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Segmentation.Advanced</category>
+  <index>0</index>
+  <title>CrownSegmentationcli</title>
+  <description><![CDATA[CLI module that can be built into an extension]]></description>
+  <version>0.1.0.</version>
+  <documentation-url>https://github.com/DCBIA-OrthoLab/SlicerDentalModelSeg</documentation-url>
+  <license/>
+  <contributor>Mathieu Leclercq</contributor>
+  <acknowledgements><![CDATA[...]]></acknowledgements>
+
+  <parameters>
+
+
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+
+    <string>
+      <name>input</name>
+      <label>input</label>
+      <index>0</index>
+      <description>Path for the surface file.</description>
+    </string>
+
+
+
+  </parameters>
+</executable>
