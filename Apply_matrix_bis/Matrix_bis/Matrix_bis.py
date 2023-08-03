@@ -12,7 +12,7 @@ import glob
 import numpy as np
 from qt import QFileDialog,QMessageBox
 from functools import partial
-import Apply_matrix_utils as amu
+# import Apply_matrix_utils as amu
 #
 # Matrix_bis
 #
@@ -287,15 +287,55 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self._parameterNode.EndModify(wasModified)
 
+
+    
+    def search(self,path, *args):
+        """
+        Return a dictionary with args element as key and a list of file in path directory finishing by args extension for each key
+
+        Example:
+        args = ('json',['.nii.gz','.nrrd'])
+        return:
+            {
+                'json' : ['path/a.json', 'path/b.json','path/c.json'],
+                '.nii.gz' : ['path/a.nii.gz', 'path/b.nii.gz']
+                '.nrrd.gz' : ['path/c.nrrd']
+            }
+        """
+        arguments = []
+        for arg in args:
+            if type(arg) == list:
+                arguments.extend(arg)
+            else:
+                arguments.append(arg)
+        return {
+            key: [
+                i
+                for i in glob.iglob(
+                    os.path.normpath("/".join([path, "**", "*"])), recursive=True
+                )
+                if i.endswith(key)
+            ]
+            for key in arguments
+        }
+    
+
     def onApplyButton(self,_):
         """
         Run processing when user clicks "Apply" button.
         """
         if self.CheckGoodEntre():
-            # self.logic.process()
-            # #self.processObserver = self.logic.cliNode.AddObserver('ModifiedEvent',self.onProcessUpdate)
-            # self.addObserver(self.logic.cliNode,vtk.vtkCommand.ModifiedEvent,self.onProcessUpdate)
-            # self.onProcessStarted()
+            self.ui.progressBar.setEnabled(True)
+            self.logic = Matrix_bisLogic(self.ui.LineEditPatient.text,
+                                            self.ui.LineEditMatrix.text,
+                                            self.ui.LineEditOutput.text, 
+                                            self.ui.LineEditSuffix.text)
+
+
+            self.logic.process()
+            #self.processObserver = self.logic.cliNode.AddObserver('ModifiedEvent',self.onProcessUpdate)
+            self.addObserver(self.logic.cliNode,vtk.vtkCommand.ModifiedEvent,self.onProcessUpdate)
+            self.onProcessStarted()
             
                             
                     
@@ -315,38 +355,76 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec_()
 
-    # def onProcessStarted(self):    
-    #     self.currentPredDict["rotation"] = self.rotation
-    #     self.currentPredDict["PredictedID"] = self.predictedId
-    #     self.currentPredDict["output"] = self.output
-    #     self.ui.doneLabel.setHidden(True)
-    #     self.ui.openOutSurfButton.setHidden(True)
-    #     self.ui.cancelButton.setHidden(False)
-    #     self.ui.cancelButton.setEnabled(True)
-    #     self.ui.resetButton.setEnabled(False)
-    #     if os.path.isdir(self.input):
-    #         self.nbFiles = len(glob.glob(f"{self.input}/*.vtk"))
-    #     else:
-    #         self.nbFiles = 1
-    #     self.ui.progressBar.setValue(0)
-    #     self.progress = 0
-    #     self.ui.progressBar.setEnabled(True)
-    #     self.ui.progressBar.setHidden(False)
-    #     self.ui.progressBar.setTextVisible(True)
-    #     self.ui.progressLabel.setHidden(False)
+    def onProcessStarted(self):    
+        self.currentPredDict["rotation"] = self.rotation
+        self.currentPredDict["PredictedID"] = self.predictedId
+        self.currentPredDict["output"] = self.output
+        self.ui.doneLabel.setHidden(True)
+        self.ui.openOutSurfButton.setHidden(True)
+        self.ui.cancelButton.setHidden(False)
+        self.ui.cancelButton.setEnabled(True)
+        self.ui.resetButton.setEnabled(False)
+        if os.path.isdir(self.ui.LineEditPatient.text):
+            self.nbFiles = len(glob.glob(f"{self.ui.LineEditPatient.text}/*.vtk"))
+        else:
+            self.nbFiles = 1
+        self.ui.progressBar.setValue(0)
+        self.progress = 0
+        self.ui.progressBar.setEnabled(True)
+        self.ui.progressBar.setHidden(False)
+        self.ui.progressBar.setTextVisible(True)
+        self.ui.progressLabel.setHidden(False)
 
-    #     qt.QSettings().setValue("TeethSeg_ModelPath",self.model)
-    #     qt.QSettings().setValue("TeethSegVisited",1)
+        qt.QSettings().setValue("TeethSeg_ModelPath",self.model)
+        qt.QSettings().setValue("TeethSegVisited",1)
 
-    # def process(self):
-    #     parameters = {}
-    #     parameters ["path_patient_intput"] = self.ui.LineEditPatient.text
-    #     parameters ["path_matrix_intput"] = self.ui.LineEditMatrix.text
-    #     parameters ["path_patient_output"] = self.ui.LineEditOutput.text
-    #     parameters ['suffix'] = self.ui.LineEditSuffix.text
-    #     flybyProcess = slicer.modules.Matrix_CLI
-    #     self.cliNode = slicer.cli.run(flybyProcess,None, parameters)    
-    #     return flybyProcess
+
+    def onProcessUpdate(self,caller,event):
+    # check log file
+        if os.path.isfile(self.log_path):
+            time = os.path.getmtime(self.log_path)
+            if time != self.time_log:
+                # if progress was made
+                self.time_log = time
+                self.progress += 1
+                progressbar_value = (self.progress -1) /self.nbFiles * 100
+                #print(f'progressbar value {progressbar_value}')
+                if progressbar_value < 100 :
+                    self.ui.progressBar.setValue(progressbar_value)
+                else:
+                    self.ui.progressBar.setValue(99)
+
+        if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed:
+            # process complete
+            self.ui.applyButton.setEnabled(True)
+            # self.ui.applyChangesButton.setEnabled(True)
+            # self.ui.resetButton.setEnabled(True)
+            # self.ui.progressLabel.setHidden(False)         
+            # self.ui.cancelButton.setEnabled(False)
+            # self.ui.progressBar.setEnabled(False)
+            # self.ui.progressBar.setHidden(True)
+            # self.ui.progressLabel.setHidden(True)
+
+            if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
+                # error
+                errorText = self.logic.cliNode.GetErrorText()
+                print("CLI execution failed: \n \n" + errorText)
+                msg = qt.QMessageBox()
+                msg.setText(f'There was an error during the process:\n \n {errorText} ')
+                msg.setWindowTitle("Error")
+                msg.exec_()
+
+            else:
+                # success
+                print('PROCESS DONE.')
+                print(self.logic.cliNode.GetOutputText())
+                self.ui.doneLabel.setHidden(False)
+                if os.path.isdir(self.output):
+                    self.ui.openOutFolderButton.setHidden(False)
+                elif os.path.isfile(self.output):
+                    self.ui.openOutSurfButton.setHidden(False) 
+    
+
     
     def CheckGoodEntre(self):
 
@@ -413,11 +491,15 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
     https://github.com/Slicer/Slicer/blob/main/Base/Python/slicer/ScriptedLoadableModule.py
     """
 
-    def __init__(self):
+    def __init__(self,path_patient_intput="",path_matrix_intput="",path_patient_output="",suffix=""):
         """
         Called when the logic class is instantiated. Can be used for initializing member variables.
         """
         ScriptedLoadableModuleLogic.__init__(self)
+        self.path_patient_intput = path_patient_intput
+        self.path_matrix_intput = path_matrix_intput
+        self.path_patient_output = path_patient_output
+        self.suffix = suffix
 
     def setDefaultParameters(self, parameterNode):
         """
@@ -428,37 +510,49 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
         if not parameterNode.GetParameter("Invert"):
             parameterNode.SetParameter("Invert", "false")
 
-    def process(self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True):
-        """
-        Run the processing algorithm.
-        Can be used without GUI widget.
-        :param inputVolume: volume to be thresholded
-        :param outputVolume: thresholding result
-        :param imageThreshold: values above/below this threshold will be set to 0
-        :param invert: if True then values above the threshold will be set to 0, otherwise values below are set to 0
-        :param showResult: show output volume in slice viewers
-        """
+    def process(self):
+        parameters = {}
+        parameters ["path_patient_intput"] = self.path_patient_intput
+        parameters ["path_matrix_intput"] = self.path_matrix_intput
+        parameters ["path_patient_output"] = self.path_patient_output
+        parameters ['suffix'] = self.suffix
+        print(1)
+        flybyProcess = slicer.modules.Matrix_CLI
+        print(2)
+        self.cliNode = slicer.cli.run(flybyProcess,None, parameters)    
+        return flybyProcess
 
-        if not inputVolume or not outputVolume:
-            raise ValueError("Input or output volume is invalid")
+    # def process(self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True):
+    #     """
+    #     Run the processing algorithm.
+    #     Can be used without GUI widget.
+    #     :param inputVolume: volume to be thresholded
+    #     :param outputVolume: thresholding result
+    #     :param imageThreshold: values above/below this threshold will be set to 0
+    #     :param invert: if True then values above the threshold will be set to 0, otherwise values below are set to 0
+    #     :param showResult: show output volume in slice viewers
+    #     """
 
-        import time
-        startTime = time.time()
-        logging.info('Processing started')
+    #     if not inputVolume or not outputVolume:
+    #         raise ValueError("Input or output volume is invalid")
 
-        # Compute the thresholded output volume using the "Threshold Scalar Volume" CLI module
-        cliParams = {
-            'InputVolume': inputVolume.GetID(),
-            'OutputVolume': outputVolume.GetID(),
-            'ThresholdValue': imageThreshold,
-            'ThresholdType': 'Above' if invert else 'Below'
-        }
-        cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True, update_display=showResult)
-        # We don't need the CLI module node anymore, remove it to not clutter the scene with it
-        slicer.mrmlScene.RemoveNode(cliNode)
+    #     import time
+    #     startTime = time.time()
+    #     logging.info('Processing started')
 
-        stopTime = time.time()
-        logging.info(f'Processing completed in {stopTime-startTime:.2f} seconds')
+    #     # Compute the thresholded output volume using the "Threshold Scalar Volume" CLI module
+    #     cliParams = {
+    #         'InputVolume': inputVolume.GetID(),
+    #         'OutputVolume': outputVolume.GetID(),
+    #         'ThresholdValue': imageThreshold,
+    #         'ThresholdType': 'Above' if invert else 'Below'
+    #     }
+    #     cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True, update_display=showResult)
+    #     # We don't need the CLI module node anymore, remove it to not clutter the scene with it
+    #     slicer.mrmlScene.RemoveNode(cliNode)
+
+    #     stopTime = time.time()
+    #     logging.info(f'Processing completed in {stopTime-startTime:.2f} seconds')
 
 
 #

@@ -6,19 +6,18 @@ from pathlib import Path
 import Apply_matrix_utils as amu
 
 
-
-
-
 def main(args):
+    print("I'm in the function")
     
-    ## CHECK IF THERE ARE GOOD INPUT
     path_patient_input = Path(args.path_patient_intput)
     path_matrix_intput = Path(args.path_matrix_intput)
     path_patient_output = Path(args.path_patient_output)
 
-    # with open(args.logPath,'w') as log_f:
-    #     # clear log file
-    #     log_f.truncate(0)
+    idx = 0
+
+    with open(args.logPath,'w') as log_f:
+        # clear log file
+        log_f.truncate(0)
 
     if path_patient_input.is_file() and path_matrix_intput.is_file():
         surf = amu.ReadSurf(args.path_patient_intput)
@@ -54,9 +53,10 @@ def main(args):
                         
                     if 'right' in filename_matrix.lower():
                         amu.WriteSurf(new_surf,output_path,filename_patient,"Right"+args.suffix)
-
-                # with open(args.logPath,'r+') as log_f :
-                #     log_f.write(str(idx))
+                        
+                with open(args.logPath,'r+') as log_f :
+                    log_f.write(str(idx))
+                idx+=1
 
     print("Applied matrix with success")
 
