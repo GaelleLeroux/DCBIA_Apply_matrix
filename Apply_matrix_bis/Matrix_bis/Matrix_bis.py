@@ -517,7 +517,7 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
         parameters ["path_patient_output"] = self.path_patient_output
         parameters ['suffix'] = self.suffix
         print(1)
-        flybyProcess = slicer.modules.Matrix_CLI
+        flybyProcess = slicer.modules.matrix_cli
         print(2)
         self.cliNode = slicer.cli.run(flybyProcess,None, parameters)    
         return flybyProcess
