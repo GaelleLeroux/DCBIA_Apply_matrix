@@ -292,43 +292,11 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Run processing when user clicks "Apply" button.
         """
         if self.CheckGoodEntre():
-            if self.ui.ComboBox.currentIndex==0 : # file option
-                surf = amu.ReadSurf(self.ui.LineEditPatient.text)
-                amu.displaySurf(surf)
-                matrix = amu.ReadMatrix(self.ui.LineEditMatrix.text)
-                #ma
-                new_surf=amu.TransformSurf(surf,matrix)
-                amu.displaySurf(new_surf)
-                amu.WriteSurf(new_surf,self.ui.LineEditOutput.text,self.ui.LineEditPatient.text,self.ui.LineEditSuffix.text)
-
-            elif self.ui.ComboBox.currentIndex==1 : # folder option
-                dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj')
-                dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
-                dico_link={}
-                for list_value_patient in dico_patient.values():
-                    for filename_patient in list_value_patient:
-                        name = (os.path.basename(filename_patient)).split('_Scan')[0].split('_scan')[0].split('_Or')[0].split('_OR')[0].split('_MAND')[0].split('_MD')[0].split('_MAX')[0].split('_MX')[0].split('_CB')[0].split('_lm')[0].split('_T2')[0].split('_T1')[0].split('_Cl')[0].split('.')[0]
-                        for list_value_matrix in dico_matrix.values():
-                            for filename_matrix in list_value_matrix:
-                                name_tempo=(os.path.basename(filename_matrix)).split('_Left')[0].split('_left')[0].split('_Right')[0].split('_right')[0].split('_T1')[0].split('_T2')[0].split('_MA')[0]
-                                if name_tempo==name:
-                                    if filename_patient in dico_link :
-                                        dico_link[filename_patient].append(filename_matrix)
-                                    else :
-                                        dico_link[filename_patient]= [filename_matrix]
-                                        
-                for filename_patient,list_matrix in dico_link.items():
-                    surf = amu.ReadSurf(os.path.join(self.ui.LineEditPatient.text,filename_patient))
-                    output_path = filename_patient.replace(os.path.normpath(self.ui.LineEditPatient.text),os.path.normpath(self.ui.LineEditOutput.text))
-                    for filename_matrix in list_matrix :
-                        matrix = amu.ReadMatrix(os.path.join(self.ui.LineEditMatrix.text,filename_matrix))
-                        new_surf=amu.TransformSurf(surf,matrix)
-                    
-                        if 'left' in filename_matrix.lower():
-                            amu.WriteSurf(new_surf,output_path,filename_patient,"Left"+self.ui.LineEditSuffix.text)
-                            
-                        if 'right' in filename_matrix.lower():
-                            amu.WriteSurf(new_surf,output_path,filename_patient,"Right"+self.ui.LineEditSuffix.text)
+            # self.logic.process()
+            # #self.processObserver = self.logic.cliNode.AddObserver('ModifiedEvent',self.onProcessUpdate)
+            # self.addObserver(self.logic.cliNode,vtk.vtkCommand.ModifiedEvent,self.onProcessUpdate)
+            # self.onProcessStarted()
+            
                             
                     
 
@@ -347,40 +315,42 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec_()
 
-    def search(self, path, *args):
-        """
-        Return a dictionary with args element as key and a list of file in path directory finishing by args extension for each key
+    # def onProcessStarted(self):    
+    #     self.currentPredDict["rotation"] = self.rotation
+    #     self.currentPredDict["PredictedID"] = self.predictedId
+    #     self.currentPredDict["output"] = self.output
+    #     self.ui.doneLabel.setHidden(True)
+    #     self.ui.openOutSurfButton.setHidden(True)
+    #     self.ui.cancelButton.setHidden(False)
+    #     self.ui.cancelButton.setEnabled(True)
+    #     self.ui.resetButton.setEnabled(False)
+    #     if os.path.isdir(self.input):
+    #         self.nbFiles = len(glob.glob(f"{self.input}/*.vtk"))
+    #     else:
+    #         self.nbFiles = 1
+    #     self.ui.progressBar.setValue(0)
+    #     self.progress = 0
+    #     self.ui.progressBar.setEnabled(True)
+    #     self.ui.progressBar.setHidden(False)
+    #     self.ui.progressBar.setTextVisible(True)
+    #     self.ui.progressLabel.setHidden(False)
 
-        Example:
-        args = ('json',['.nii.gz','.nrrd'])
-        return:
-            {
-                'json' : ['path/a.json', 'path/b.json','path/c.json'],
-                '.nii.gz' : ['path/a.nii.gz', 'path/b.nii.gz']
-                '.nrrd.gz' : ['path/c.nrrd']
-            }
-        """
-        arguments = []
-        for arg in args:
-            if type(arg) == list:
-                arguments.extend(arg)
-            else:
-                arguments.append(arg)
-        return {
-            key: [
-                i
-                for i in glob.iglob(
-                    os.path.normpath("/".join([path, "**", "*"])), recursive=True
-                )
-                if i.endswith(key)
-            ]
-            for key in arguments
-        }
+    #     qt.QSettings().setValue("TeethSeg_ModelPath",self.model)
+    #     qt.QSettings().setValue("TeethSegVisited",1)
 
+    # def process(self):
+    #     parameters = {}
+    #     parameters ["path_patient_intput"] = self.ui.LineEditPatient.text
+    #     parameters ["path_matrix_intput"] = self.ui.LineEditMatrix.text
+    #     parameters ["path_patient_output"] = self.ui.LineEditOutput.text
+    #     parameters ['suffix'] = self.ui.LineEditSuffix.text
+    #     flybyProcess = slicer.modules.Matrix_CLI
+    #     self.cliNode = slicer.cli.run(flybyProcess,None, parameters)    
+    #     return flybyProcess
     
     def CheckGoodEntre(self):
 
-        if self.ui.ComboBox.currentIndex==1 :
+        if self.ui.ComboBox.currentIndex==1 :  # folder option
             dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj')
             dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
 
@@ -401,7 +371,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             elif self.ui.ComboBox.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditPatient.text))
                 if extension != ".vtk" and extension != ".vtp" and extension != ".stl" and extension != ".off" and extension != ".obj" :
-                        warning_text = warning_text + "Wrong type of file matrix detected" + "\n"
+                        warning_text = warning_text + "Wrong type of file patient detected" + "\n"
                         warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj" + "\n"
         
 
@@ -413,12 +383,12 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else :
             if self.ui.ComboBox.currentIndex==1 :
                 if len(dico_matrix['.npy'])==0 and len(dico_matrix['.h5'])==0 and len(dico_matrix['.tfm'])==0 and len(dico_matrix['.mat'])==0 and len(dico_matrix['.txt'])==0 :
-                    warning_text = warning_text + "Wrong type of file patient detected :" + "\n"
+                    warning_text = warning_text + "Wrong type of file matrix detected :" + "\n"
                     warning_text = warning_text + "File authorized : .npy / .h5 / .tfm / . mat / .txt" + "\n"
             elif self.ui.ComboBox.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditMatrix.text))
                 if extension != ".npy"  and extension != ".h5" and extension != ".tfm" and extension != ".mat" and extension != ".txt":
-                        warning_text = warning_text + "Wrong type of file patient detect" + "\n"
+                        warning_text = warning_text + "Wrong type of file matrix detect" + "\n"
                         warning_text = warning_text + "File authorized : .npy / .h5 / .tfm / . mat / .txt" + "\n"
 
         if warning_text=='':

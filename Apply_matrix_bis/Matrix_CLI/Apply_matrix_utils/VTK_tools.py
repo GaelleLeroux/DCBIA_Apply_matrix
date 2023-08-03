@@ -1,6 +1,5 @@
 import vtk
 import os
-import slicer
 import numpy as np
 
 from Apply_matrix_utils.OFFReader import OFFReader
@@ -85,13 +84,6 @@ def WriteSurf(surf, output_folder,name,inname):
         writer.SetFileName(os.path.join(out_path,f"{name}{inname}{extension}"))
         writer.SetInputData(surf)
         writer.Update()
-
-
-def displaySurf(surf):
-    mesh = slicer.app.mrmlScene().AddNewNodeByClass("vtkMRMLModelNode", 'First data')
-    mesh.SetAndObservePolyData(surf)
-    mesh.CreateDefaultDisplayNodes()
-
 
 
 def RotateTransform(surf, transform):
