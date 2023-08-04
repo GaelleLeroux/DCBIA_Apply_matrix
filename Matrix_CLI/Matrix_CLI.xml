@@ -44,6 +44,14 @@
       <description>Suffix</description>
     </string>
 
+    <string>
+      <name>logPath</name>
+      <label>logPath</label>
+      <index>4</index>
+      <description>logPath</description>
+    </string>
+
+
 
 
   </parameters>

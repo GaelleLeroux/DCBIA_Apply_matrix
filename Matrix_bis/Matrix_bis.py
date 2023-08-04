@@ -144,6 +144,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.SearchButtonMatrix.connect("clicked(bool)",partial(self.openFinder,"Matrix"))
         self.ui.SearchButtonPatient.connect("clicked(bool)",partial(self.openFinder,"Patient"))
         self.ui.SearchButtonOutput.connect("clicked(bool)",partial(self.openFinder,"Output"))
+        self.ui.ButtonAutoFill.connect("clicked(bool)",self.Autofill)
         
 
         # Buttons
@@ -151,6 +152,20 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
+
+        self.log_path = os.path.join(slicer.util.tempDirectory(), 'process.log')
+        self.time_log = 0 # for progress bar
+        self.cliNode = None
+        self.installCliNode = None  
+        self.progress=0
+
+
+    def Autofill(self):
+        self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output_test")
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
+        self.ui.ComboBox.setCurrentIndex(1)
+
     
     def openFinder(self,nom : str,_) -> None : 
         #print(self.ui.ComboBoxMatrix.currentIndex())
@@ -329,7 +344,8 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic = Matrix_bisLogic(self.ui.LineEditPatient.text,
                                             self.ui.LineEditMatrix.text,
                                             self.ui.LineEditOutput.text, 
-                                            self.ui.LineEditSuffix.text)
+                                            self.ui.LineEditSuffix.text,
+                                            self.log_path)
 
 
             self.logic.process()
@@ -356,27 +372,25 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             msg.exec_()
 
     def onProcessStarted(self):    
-        self.currentPredDict["rotation"] = self.rotation
-        self.currentPredDict["PredictedID"] = self.predictedId
-        self.currentPredDict["output"] = self.output
-        self.ui.doneLabel.setHidden(True)
-        self.ui.openOutSurfButton.setHidden(True)
-        self.ui.cancelButton.setHidden(False)
-        self.ui.cancelButton.setEnabled(True)
-        self.ui.resetButton.setEnabled(False)
+        # self.ui.doneLabel.setHidden(True)
+        # self.ui.openOutSurfButton.setHidden(True)
+        # self.ui.cancelButton.setHidden(False)
+        # self.ui.cancelButton.setEnabled(True)
+        # self.ui.resetButton.setEnabled(False)
         if os.path.isdir(self.ui.LineEditPatient.text):
             self.nbFiles = len(glob.glob(f"{self.ui.LineEditPatient.text}/*.vtk"))
         else:
             self.nbFiles = 1
+        print("Nb files : ",self.nbFiles)
         self.ui.progressBar.setValue(0)
-        self.progress = 0
+        # self.progress = 0
         self.ui.progressBar.setEnabled(True)
         self.ui.progressBar.setHidden(False)
         self.ui.progressBar.setTextVisible(True)
-        self.ui.progressLabel.setHidden(False)
+        # self.ui.progressLabel.setHidden(False)
 
-        qt.QSettings().setValue("TeethSeg_ModelPath",self.model)
-        qt.QSettings().setValue("TeethSegVisited",1)
+        # qt.QSettings().setValue("TeethSeg_ModelPath",self.model)
+        # qt.QSettings().setValue("TeethSegVisited",1)
 
 
     def onProcessUpdate(self,caller,event):
@@ -408,20 +422,22 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
                 # error
                 errorText = self.logic.cliNode.GetErrorText()
+                #print("error detected")
                 print("CLI execution failed: \n \n" + errorText)
-                msg = qt.QMessageBox()
-                msg.setText(f'There was an error during the process:\n \n {errorText} ')
-                msg.setWindowTitle("Error")
-                msg.exec_()
+                # print(errorText)
+                # msg = qt.QMessageBox()
+                # msg.setText(f'There was an error during the process:\n \n {errorText} ')
+                # msg.setWindowTitle("Error")
+                # msg.exec_()
 
             else:
                 # success
                 print('PROCESS DONE.')
                 print(self.logic.cliNode.GetOutputText())
                 self.ui.doneLabel.setHidden(False)
-                if os.path.isdir(self.output):
+                if os.path.isdir(self.ui.LineEditOutput.text):
                     self.ui.openOutFolderButton.setHidden(False)
-                elif os.path.isfile(self.output):
+                elif os.path.isfile(self.ui.LineEditOutput.text):
                     self.ui.openOutSurfButton.setHidden(False) 
     
 
@@ -491,7 +507,7 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
     https://github.com/Slicer/Slicer/blob/main/Base/Python/slicer/ScriptedLoadableModule.py
     """
 
-    def __init__(self,path_patient_intput="",path_matrix_intput="",path_patient_output="",suffix=""):
+    def __init__(self,path_patient_intput=None,path_matrix_intput=None,path_patient_output=None,suffix=None,logPath=None):
         """
         Called when the logic class is instantiated. Can be used for initializing member variables.
         """
@@ -500,6 +516,10 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
         self.path_matrix_intput = path_matrix_intput
         self.path_patient_output = path_patient_output
         self.suffix = suffix
+        self.logPath = logPath
+        self.cliNode = None
+        self.installCliNode = None
+        
 
     def setDefaultParameters(self, parameterNode):
         """
@@ -512,48 +532,20 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
 
     def process(self):
         parameters = {}
+        
         parameters ["path_patient_intput"] = self.path_patient_intput
         parameters ["path_matrix_intput"] = self.path_matrix_intput
         parameters ["path_patient_output"] = self.path_patient_output
-        parameters ['suffix'] = self.suffix
-        print(1)
+        parameters ["suffix"] = self.suffix
+        parameters ["logPath"] = self.logPath
+        
+        print("len parameters: ",len(parameters))
+        print("parameters : ", parameters)
         flybyProcess = slicer.modules.matrix_cli
-        print(2)
-        self.cliNode = slicer.cli.run(flybyProcess,None, parameters)    
+        self.cliNode = slicer.cli.run(flybyProcess,None, parameters)  
         return flybyProcess
 
-    # def process(self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True):
-    #     """
-    #     Run the processing algorithm.
-    #     Can be used without GUI widget.
-    #     :param inputVolume: volume to be thresholded
-    #     :param outputVolume: thresholding result
-    #     :param imageThreshold: values above/below this threshold will be set to 0
-    #     :param invert: if True then values above the threshold will be set to 0, otherwise values below are set to 0
-    #     :param showResult: show output volume in slice viewers
-    #     """
-
-    #     if not inputVolume or not outputVolume:
-    #         raise ValueError("Input or output volume is invalid")
-
-    #     import time
-    #     startTime = time.time()
-    #     logging.info('Processing started')
-
-    #     # Compute the thresholded output volume using the "Threshold Scalar Volume" CLI module
-    #     cliParams = {
-    #         'InputVolume': inputVolume.GetID(),
-    #         'OutputVolume': outputVolume.GetID(),
-    #         'ThresholdValue': imageThreshold,
-    #         'ThresholdType': 'Above' if invert else 'Below'
-    #     }
-    #     cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True, update_display=showResult)
-    #     # We don't need the CLI module node anymore, remove it to not clutter the scene with it
-    #     slicer.mrmlScene.RemoveNode(cliNode)
-
-    #     stopTime = time.time()
-    #     logging.info(f'Processing completed in {stopTime-startTime:.2f} seconds')
-
+   
 
 #
 # Matrix_bisTest

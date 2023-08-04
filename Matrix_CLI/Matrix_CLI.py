@@ -19,6 +19,7 @@ def main(args):
     with open(args.logPath,'w') as log_f:
         # clear log file
         log_f.truncate(0)
+    print("dessous log")
 
     if path_patient_input.is_file() and path_matrix_intput.is_file():
         surf = amu.ReadSurf(args.path_patient_intput)
@@ -72,11 +73,12 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
 
-
-    parser.add_argument('path_patient_intput',type=str)
-    parser.add_argument('path_matrix_intput',type=str)
-    parser.add_argument('path_patient_output',type=str)
-    parser.add_argument("suffix",type=str)
+    
+    parser.add_argument('path_patient_intput',type=str,help="choose a patient")
+    parser.add_argument('path_matrix_intput',type=str,help="choose a matrix")
+    parser.add_argument('path_patient_output',type=str,help="choose an output")
+    parser.add_argument("suffix",type=str,help="choose a suffix")
+    parser.add_argument("logPath",type=str, help="logpath")
     
 
 
