@@ -159,6 +159,14 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.installCliNode = None  
         self.progress=0
 
+        self.ui.progressBar.setVisible(False)
+        self.ui.progressBar.setRange(0,100)
+        self.ui.progressBar.setTextVisible(True)
+        self.ui.label_info.setVisible(False)
+        self.ui.ComboBox.setCurrentIndex(1)
+
+        
+
 
     def Autofill(self):
         self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output_test")
@@ -340,7 +348,12 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Run processing when user clicks "Apply" button.
         """
         if self.CheckGoodEntre():
+            self.ui.progressBar.setVisible(True)
             self.ui.progressBar.setEnabled(True)
+            self.ui.progressBar.setTextVisible(True)
+            
+            self.ui.label_info.setVisible(True)
+        
             self.logic = Matrix_bisLogic(self.ui.LineEditPatient.text,
                                             self.ui.LineEditMatrix.text,
                                             self.ui.LineEditOutput.text, 
@@ -357,19 +370,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     
 
                 
-            #qt.QMessageBox.information(self.parent,"Matrix applied with sucess")
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Information)
-        
-            # setting message for Message Box
-            msg.setText("Matrix applied with success")
             
-            # setting Message box window title
-            msg.setWindowTitle("Information")
-            
-            # declaring buttons on Message Box
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
 
     def onProcessStarted(self):    
         # self.ui.doneLabel.setHidden(True)
@@ -378,12 +379,13 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # self.ui.cancelButton.setEnabled(True)
         # self.ui.resetButton.setEnabled(False)
         if os.path.isdir(self.ui.LineEditPatient.text):
-            self.nbFiles = len(glob.glob(f"{self.ui.LineEditPatient.text}/*.vtk"))
+            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj'])
         else:
             self.nbFiles = 1
         print("Nb files : ",self.nbFiles)
         self.ui.progressBar.setValue(0)
-        # self.progress = 0
+        self.progress = 0
+        self.ui.label_info.setText("Number of processed files : "+str(self.progress)+"/"+str(self.nbFiles))
         self.ui.progressBar.setEnabled(True)
         self.ui.progressBar.setHidden(False)
         self.ui.progressBar.setTextVisible(True)
@@ -401,51 +403,67 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 # if progress was made
                 self.time_log = time
                 self.progress += 1
-                progressbar_value = (self.progress -1) /self.nbFiles * 100
+                progressbar_value = (self.progress-1) /self.nbFiles * 100
                 #print(f'progressbar value {progressbar_value}')
                 if progressbar_value < 100 :
                     self.ui.progressBar.setValue(progressbar_value)
+                    self.ui.progressBar.setFormat(str(progressbar_value)+"%")
                 else:
                     self.ui.progressBar.setValue(99)
+                    self.ui.progressBar.setFormat("99%")
+                self.ui.label_info.setText("Number of processed files : "+str(self.progress-1)+"/"+str(self.nbFiles))
+                
+                
 
         if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed:
             # process complete
             self.ui.applyButton.setEnabled(True)
-            # self.ui.applyChangesButton.setEnabled(True)
-            # self.ui.resetButton.setEnabled(True)
-            # self.ui.progressLabel.setHidden(False)         
-            # self.ui.cancelButton.setEnabled(False)
-            # self.ui.progressBar.setEnabled(False)
-            # self.ui.progressBar.setHidden(True)
-            # self.ui.progressLabel.setHidden(True)
+            
 
             if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
                 # error
                 errorText = self.logic.cliNode.GetErrorText()
-                #print("error detected")
                 print("CLI execution failed: \n \n" + errorText)
-                # print(errorText)
-                # msg = qt.QMessageBox()
-                # msg.setText(f'There was an error during the process:\n \n {errorText} ')
-                # msg.setWindowTitle("Error")
-                # msg.exec_()
+                msg = qt.QMessageBox()
+                msg.setText(f'There was an error during the process:\n \n {errorText} ')
+                msg.setWindowTitle("Error")
+                msg.exec_()
 
             else:
                 # success
                 print('PROCESS DONE.')
                 print(self.logic.cliNode.GetOutputText())
-                self.ui.doneLabel.setHidden(False)
-                if os.path.isdir(self.ui.LineEditOutput.text):
-                    self.ui.openOutFolderButton.setHidden(False)
-                elif os.path.isfile(self.ui.LineEditOutput.text):
-                    self.ui.openOutSurfButton.setHidden(False) 
+                self.ui.progressBar.setValue(100)
+                self.ui.progressBar.setFormat("100%")
+
+                #qt.QMessageBox.information(self.parent,"Matrix applied with sucess")
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Information)
+            
+                # setting message for Message Box
+                msg.setText("Matrix applied with success")
+                
+                # setting Message box window title
+                msg.setWindowTitle("Information")
+                
+                # declaring buttons on Message Box
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.exec_()
+
+                self.ui.progressBar.setVisible(False)
+                self.ui.label_info.setVisible(False)
+                self.ui.LineEditOutput.setText("")
+                self.ui.LineEditPatient.setText("")
+                self.ui.LineEditMatrix.setText("")
+                self.ui.ComboBox.setCurrentIndex(1)
+                
     
 
     
     def CheckGoodEntre(self):
 
         if self.ui.ComboBox.currentIndex==1 :  # folder option
-            dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj')
+            self.dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj')
             dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
 
         warning_text = ""
@@ -459,8 +477,8 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 warning_text = warning_text + "Enter file patient" + "\n"
         else :
             if self.ui.ComboBox.currentIndex==1 :
-                if len(dico_patient['.vtk'])==0 and len(dico_patient['.vtp']) and len(dico_patient['.stl']) and len(dico_patient['.off']) and len(dico_patient['.obj']) :
-                    warning_text = warning_text + "Wrong type of file patient detected :" + "\n"
+                if len(self.dico_patient['.vtk'])==0 and len(self.dico_patient['.vtp']) and len(self.dico_patient['.stl']) and len(self.dico_patient['.off']) and len(self.dico_patient['.obj']) :
+                    warning_text = warning_text + "Folder empty or wrong type of file patient" + "\n"
                     warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj" + "\n"
             elif self.ui.ComboBox.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditPatient.text))
@@ -477,7 +495,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else :
             if self.ui.ComboBox.currentIndex==1 :
                 if len(dico_matrix['.npy'])==0 and len(dico_matrix['.h5'])==0 and len(dico_matrix['.tfm'])==0 and len(dico_matrix['.mat'])==0 and len(dico_matrix['.txt'])==0 :
-                    warning_text = warning_text + "Wrong type of file matrix detected :" + "\n"
+                    warning_text = warning_text + "Folder empty or wrong type of files matrix " + "\n"
                     warning_text = warning_text + "File authorized : .npy / .h5 / .tfm / . mat / .txt" + "\n"
             elif self.ui.ComboBox.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditMatrix.text))
