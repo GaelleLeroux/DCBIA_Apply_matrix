@@ -379,10 +379,9 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # self.ui.cancelButton.setEnabled(True)
         # self.ui.resetButton.setEnabled(False)
         if os.path.isdir(self.ui.LineEditPatient.text):
-            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj'])
+            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj']) + len(self.dico_patient['.nii.gz'])
         else:
             self.nbFiles = 1
-        print("Nb files : ",self.nbFiles)
         self.ui.progressBar.setValue(0)
         self.progress = 0
         self.ui.label_info.setText("Number of processed files : "+str(self.progress)+"/"+str(self.nbFiles))
@@ -404,7 +403,6 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.time_log = time
                 self.progress += 1
                 progressbar_value = (self.progress-1) /self.nbFiles * 100
-                #print(f'progressbar value {progressbar_value}')
                 if progressbar_value < 100 :
                     self.ui.progressBar.setValue(progressbar_value)
                     self.ui.progressBar.setFormat(str(progressbar_value)+"%")
@@ -463,7 +461,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def CheckGoodEntre(self):
 
         if self.ui.ComboBox.currentIndex==1 :  # folder option
-            self.dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj')
+            self.dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj','.nii.gz')
             dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
 
         warning_text = ""
@@ -477,14 +475,14 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 warning_text = warning_text + "Enter file patient" + "\n"
         else :
             if self.ui.ComboBox.currentIndex==1 :
-                if len(self.dico_patient['.vtk'])==0 and len(self.dico_patient['.vtp']) and len(self.dico_patient['.stl']) and len(self.dico_patient['.off']) and len(self.dico_patient['.obj']) :
+                if len(self.dico_patient['.vtk'])==0 and len(self.dico_patient['.vtp']) and len(self.dico_patient['.stl']) and len(self.dico_patient['.off']) and len(self.dico_patient['.obj']) and len(self.dico_patient['.nii.gz']) :
                     warning_text = warning_text + "Folder empty or wrong type of file patient" + "\n"
-                    warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj" + "\n"
+                    warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj / .nii.gz" + "\n"
             elif self.ui.ComboBox.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditPatient.text))
                 if extension != ".vtk" and extension != ".vtp" and extension != ".stl" and extension != ".off" and extension != ".obj" :
                         warning_text = warning_text + "Wrong type of file patient detected" + "\n"
-                        warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj" + "\n"
+                        warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj / .nii.gz" + "\n"
         
 
         if self.ui.LineEditMatrix.text=="":
@@ -557,8 +555,6 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
         parameters ["suffix"] = self.suffix
         parameters ["logPath"] = self.logPath
         
-        print("len parameters: ",len(parameters))
-        print("parameters : ", parameters)
         flybyProcess = slicer.modules.matrix_cli
         self.cliNode = slicer.cli.run(flybyProcess,None, parameters)  
         return flybyProcess

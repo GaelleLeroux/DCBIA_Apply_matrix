@@ -64,6 +64,8 @@ def ReadSurf(path):
             reader.Update()
             surf = reader.GetOutput()
 
+        
+
     return surf
 
 
