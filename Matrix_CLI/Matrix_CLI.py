@@ -68,14 +68,19 @@ def main(args):
     ## Apply matrix on files == .nii.gz 
     ## Call the function in GZ_tools to Apply the matrixs and to save the new files
     ## The update of the file log for the progress bare is in the function ApplyMatrixGZ
-    patients,nb_worker = amu.GetPatients(args.path_patient_intput,args.path_matrix_intput)
+    patients,nb_files = amu.GetPatients(args.path_patient_intput,args.path_matrix_intput)
+    nb_worker = 6
     nb_scan_done = mp.Manager().list([0 for i in range(nb_worker)])
-    check = mp.Process(target=amu.CheckSharedList,args=(nb_scan_done,len(patients))) 
+    idxProcess = mp.Value('i',idx)
+    check = mp.Process(target=amu.CheckSharedList,args=(nb_scan_done,len(patients),args.logPath,idxProcess)) 
     check.start()
+    print(f"Numbers files : {nb_files}")
+    print(patients)
 
     splits = np.array_split(list(patients.keys()),nb_worker)
 
-    processess = [mp.Process(target=amu.ApplyMatrixGZ,args=(patients,keys,args.path_patient_intput,args.path_patient_output,i,nb_scan_done,args.logPath,idx)) for i,keys in enumerate(splits)]
+    
+    processess = [mp.Process(target=amu.ApplyMatrixGZ,args=(patients,keys,args.path_patient_intput,args.path_patient_output,i,nb_scan_done,args.logPath,idx,args.suffix)) for i,keys in enumerate(splits)]
 
     for proc in processess: proc.start()
     for proc in processess: proc.join()
