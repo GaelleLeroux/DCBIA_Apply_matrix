@@ -10,7 +10,6 @@ import Apply_matrix_utils as amu
 
 
 def main(args):
-    print("entree cli")
     
     path_patient_input = Path(args.path_patient_intput)
     path_matrix_intput = Path(args.path_matrix_intput)
@@ -63,7 +62,6 @@ def main(args):
                     log_f.write(str(idx))
                 idx+=1
 
-    print("avant .nii.gz")
 
     ## Apply matrix on files == .nii.gz 
     ## Call the function in GZ_tools to Apply the matrixs and to save the new files
@@ -72,13 +70,14 @@ def main(args):
     nb_worker = 6
     nb_scan_done = mp.Manager().list([0 for i in range(nb_worker)])
     idxProcess = mp.Value('i',idx)
-    check = mp.Process(target=amu.CheckSharedList,args=(nb_scan_done,len(patients),args.logPath,idxProcess)) 
+    check = mp.Process(target=amu.CheckSharedList,args=(nb_scan_done,nb_files,args.logPath,idxProcess)) 
     check.start()
-    print(f"Numbers files : {nb_files}")
-    print(patients)
+    print(f"idx : {idx}")
+    print(f"nb_files : {nb_files}")
+
+    print()
 
     splits = np.array_split(list(patients.keys()),nb_worker)
-
     
     processess = [mp.Process(target=amu.ApplyMatrixGZ,args=(patients,keys,args.path_patient_intput,args.path_patient_output,i,nb_scan_done,args.logPath,idx,args.suffix)) for i,keys in enumerate(splits)]
 

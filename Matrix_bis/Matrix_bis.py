@@ -379,7 +379,8 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # self.ui.cancelButton.setEnabled(True)
         # self.ui.resetButton.setEnabled(False)
         if os.path.isdir(self.ui.LineEditPatient.text):
-            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj']) + len(self.dico_patient['.nii.gz'])
+            niiGzT1 = [f for f in self.dico_patient['.nii.gz'] if 'T1' in f]
+            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj']) + len(niiGzT1)
         else:
             self.nbFiles = 1
         self.ui.progressBar.setValue(0)
@@ -410,13 +411,15 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     self.ui.progressBar.setValue(99)
                     self.ui.progressBar.setFormat("99%")
                 self.ui.label_info.setText("Number of processed files : "+str(self.progress-1)+"/"+str(self.nbFiles))
+                print(f"self.progress : {self.progress}")
                 
                 
 
         if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed:
             # process complete
             self.ui.applyButton.setEnabled(True)
-            
+            self.ui.label_info.setText("Number of processed files : "+str(self.progress)+"/"+str(self.nbFiles))
+            print(f"self.progress : {self.progress}")
 
             if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
                 # error

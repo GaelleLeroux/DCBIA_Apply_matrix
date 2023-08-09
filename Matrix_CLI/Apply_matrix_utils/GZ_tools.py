@@ -8,12 +8,12 @@ from Apply_matrix_utils.General_tools import search
 def CheckSharedList(shared_list,maxvalue,logPath,idxProcess):
     for i in tqdm(range(maxvalue)):
         while sum(shared_list) < i+1:
-            time.sleep(1)
+            time.sleep(0.1)
         with open(logPath,'r+') as log_f :
             idxProcess.acquire()
             log_f.write(str(idxProcess.value))
         idxProcess.value +=1
-        print(f"idxProcess: {idxProcess.value}")
+        print(f"idxProcess.value : {idxProcess.value}")
         idxProcess.release()
 
 def ResampleImage(image, transform):
@@ -47,12 +47,10 @@ def ResampleImage(image, transform):
     return resampled_image
 
 def ApplyMatrixGZ(patients,keys,input_path, out_path, num_worker=0, shared_list=None,logPath=None,idx=0,suffix=""):
-
     for key in keys:
         try:
-                
-            img = sitk.ReadImage(patients[key]["scan"])
-
+            
+        
             transform_right = None
             transform_left = None
 
@@ -66,32 +64,34 @@ def ApplyMatrixGZ(patients,keys,input_path, out_path, num_worker=0, shared_list=
             except:
                 print(f"Patient {key} not have left matrix files")
             
+            for scan in patients[key]["scan"] :
+                img = sitk.ReadImage(scan)
 
-            if transform_right!=None :
-                resampled = ResampleImage(img,transform_right)
-                outpath = patients[key]['scan'].replace(input_path,out_path)
-                if not os.path.exists(os.path.dirname(outpath)):
-                    os.makedirs(os.path.dirname(outpath))
-                sitk.WriteImage(resampled,outpath.split('.nii.gz')[0]+f'Scan_Right_Or'+suffix+'.nii.gz')
-            
-            if transform_left!=None : 
-                resampled = ResampleImage(img,transform_left)
-                outpath = patients[key]['scan'].replace(input_path,out_path)
-                if not os.path.exists(os.path.dirname(outpath)):
-                    os.makedirs(os.path.dirname(outpath))
-                sitk.WriteImage(resampled,outpath.split('.nii.gz')[0]+f'Scan_Left_Or'+suffix+'.nii.gz')
+                if transform_right!=None :
+                    resampled = ResampleImage(img,transform_right)
+                    outpath = scan.replace(input_path,out_path)
+                    if not os.path.exists(os.path.dirname(outpath)):
+                        os.makedirs(os.path.dirname(outpath))
+                    sitk.WriteImage(resampled,outpath.split('.nii.gz')[0]+f'Scan_Right_Or'+suffix+'.nii.gz')
+                
+                if transform_left!=None : 
+                    resampled = ResampleImage(img,transform_left)
+                    outpath = scan.replace(input_path,out_path)
+                    if not os.path.exists(os.path.dirname(outpath)):
+                        os.makedirs(os.path.dirname(outpath))
+                    sitk.WriteImage(resampled,outpath.split('.nii.gz')[0]+f'Scan_Left_Or'+suffix+'.nii.gz')
+                
+                shared_list[num_worker] += 1
 
-            
-
-
-            
-            # WriteJson(ldmk,"/home/luciacev/Desktop/Luc_Anchling/DATA/ALI_CBCT/Resampled/"+patient+".json")
-            shared_list[num_worker] += 1
+           
           
         except KeyError:
             print(f"Patient {key} not have either scan or matrix")
             shared_list[num_worker] += 1
             continue
+
+        time.sleep(0.5)
+
 
 
 def GetPatients(file_path,matrix_path):
@@ -110,7 +110,8 @@ def GetPatients(file_path,matrix_path):
 
         if file_pat not in patients.keys():
             patients[file_pat] = {}
-        patients[file_pat]['scan'] = file
+            patients[file_pat]['scan'] = []
+        patients[file_pat]['scan'].append(file)
         
     for i in range(len(matrixes)):
         matrix = matrixes[i]
