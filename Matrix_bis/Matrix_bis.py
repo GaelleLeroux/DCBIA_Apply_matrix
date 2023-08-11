@@ -169,13 +169,24 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
     def Autofill(self):
+
+        #SCAN 293
         self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Non_Oriented_Marcela/Scans_Non_Oriented/Scans_Controls_per_patients/r_293/T1")
+        
+
+
+        #SEG 293
+        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Non_Oriented_Marcela/Segs_Non_Oriented/Seg_Controls_per_patients/r_293/T1")
+
+
+        #MATRIX 293
         self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Oriented_Marcela/Vtk_MA_Controls_per_patients_Or/r_293")
 
 
+
         self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output_test")
-        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
-        # self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
         self.ui.ComboBox.setCurrentIndex(1)
 
     

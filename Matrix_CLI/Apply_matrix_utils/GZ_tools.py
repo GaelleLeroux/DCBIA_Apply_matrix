@@ -2,6 +2,7 @@ import SimpleITK as sitk
 import os,time
 from tqdm import tqdm
 from Apply_matrix_utils.General_tools import search
+import numpy as np
 
 
 
@@ -16,6 +17,15 @@ def CheckSharedList(shared_list,maxvalue,logPath,idxProcess):
         # print(f"idxProcess.value : {idxProcess.value}")
         idxProcess.release()
         time.sleep(0.5)
+
+
+def CenterImage(img):
+
+    T = - np.array(img.TransformContinuousIndexToPhysicalPoint(np.array(img.GetSize())/2.0))
+    translation = sitk.TranslationTransform(3)
+    translation.SetOffset(T.tolist())
+    img_trans = ResampleImage(img,translation.GetInverse())
+    return img_trans
 
 def ResampleImage(image, transform):
     '''
@@ -65,6 +75,7 @@ def ApplyMatrixGZ(patients,keys,input_path, out_path, num_worker=0, shared_list=
             
             for scan in patients[key]["scan"] :
                 img = sitk.ReadImage(scan)
+                img = CenterImage(img)
                 print(f"scan : {scan}")
                 print(f"transform_right : {patients[key]['mat_right']}")
                 print(f"transform_left : {patients[key]['mat_left']}")
