@@ -13,8 +13,9 @@ def CheckSharedList(shared_list,maxvalue,logPath,idxProcess):
             idxProcess.acquire()
             log_f.write(str(idxProcess.value))
         idxProcess.value +=1
-        print(f"idxProcess.value : {idxProcess.value}")
+        # print(f"idxProcess.value : {idxProcess.value}")
         idxProcess.release()
+        time.sleep(0.5)
 
 def ResampleImage(image, transform):
     '''
@@ -24,8 +25,6 @@ def ResampleImage(image, transform):
     ----------
     image : SimpleITK.Image
         Image to be resampled
-    target : SimpleITK.Image
-        Target image
     transform : SimpleITK transform
         Transform to be applied to the image.
         
@@ -66,6 +65,9 @@ def ApplyMatrixGZ(patients,keys,input_path, out_path, num_worker=0, shared_list=
             
             for scan in patients[key]["scan"] :
                 img = sitk.ReadImage(scan)
+                print(f"scan : {scan}")
+                print(f"transform_right : {patients[key]['mat_right']}")
+                print(f"transform_left : {patients[key]['mat_left']}")
 
                 if transform_right!=None :
                     resampled = ResampleImage(img,transform_right)

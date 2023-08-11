@@ -169,9 +169,13 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
     def Autofill(self):
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Non_Oriented_Marcela/Scans_Non_Oriented/Scans_Controls_per_patients/r_293/T1")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Oriented_Marcela/Vtk_MA_Controls_per_patients_Or/r_293")
+
+
         self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output_test")
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
+        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
+        # self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
         self.ui.ComboBox.setCurrentIndex(1)
 
     
@@ -411,15 +415,14 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     self.ui.progressBar.setValue(99)
                     self.ui.progressBar.setFormat("99%")
                 self.ui.label_info.setText("Number of processed files : "+str(self.progress-1)+"/"+str(self.nbFiles))
-                print(f"self.progress : {self.progress}")
                 
                 
 
         if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed:
             # process complete
             self.ui.applyButton.setEnabled(True)
-            self.ui.label_info.setText("Number of processed files : "+str(self.progress)+"/"+str(self.nbFiles))
-            print(f"self.progress : {self.progress}")
+            # self.ui.label_info.setText("Number of processed files : "+str(self.progress)+"/"+str(self.nbFiles))
+            # print(f"self.progress : {self.progress}")
 
             if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
                 # error
