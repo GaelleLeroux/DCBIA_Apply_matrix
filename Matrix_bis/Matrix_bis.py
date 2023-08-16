@@ -12,6 +12,7 @@ import glob
 import numpy as np
 from qt import QFileDialog,QMessageBox
 from functools import partial
+
 # import Apply_matrix_utils as amu
 #
 # Matrix_bis
@@ -163,7 +164,8 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.progressBar.setRange(0,100)
         self.ui.progressBar.setTextVisible(True)
         self.ui.label_info.setVisible(False)
-        self.ui.ComboBox.setCurrentIndex(1)
+        self.ui.ComboBoxPatient.setCurrentIndex(1)
+        self.ui.ComboBoxMatrix.setCurrentIndex(1)
 
         
 
@@ -171,7 +173,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def Autofill(self):
 
         #SCAN 293
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Non_Oriented_Marcela/Scans_Non_Oriented/Scans_Controls_per_patients/r_293/T1")
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged/Merged_Seg_Centered/Seg_Controls_per_patients/r_2/T1/r_2_T1_MAND_Seg.nii.gz")
         
 
 
@@ -180,31 +182,36 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
         #MATRIX 293
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Oriented_Marcela/Vtk_MA_Controls_per_patients_Or/r_293")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/VTK_Matrix_Marcela/Vtk_MA_Controls_per_patients_Or/r_2/r_2_T1_Left_MA.tfm")
 
 
 
-        self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output_test")
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
-        self.ui.ComboBox.setCurrentIndex(1)
+        self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output")
+        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
+        # self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
+        self.ui.ComboBoxPatient.setCurrentIndex(0)
+        self.ui.ComboBoxMatrix.setCurrentIndex(0)
 
     
     def openFinder(self,nom : str,_) -> None : 
-        #print(self.ui.ComboBoxMatrix.currentIndex())
-        if self.ui.ComboBox.currentIndex==1 or nom=="Output":
-                  surface_folder = qt.QFileDialog.getExistingDirectory(
-	          self.parent, "Select a scan folder"
-		  )
-        else :
-                  surface_folder = QFileDialog.getOpenFileName(self.parent,
-                                                'Open a file',
-                  )
+        
         if nom=="Matrix":
+            if self.ui.ComboBoxMatrix.currentIndex==1:
+                  surface_folder = qt.QFileDialog.getExistingDirectory(self.parent, "Select a scan folder")
+            else :
+                  surface_folder = QFileDialog.getOpenFileName(self.parent,'Open a file',)
+
             self.ui.LineEditMatrix.setText(surface_folder)
+
         elif nom=="Patient":
+            if self.ui.ComboBoxPatient.currentIndex==1:
+                surface_folder = qt.QFileDialog.getExistingDirectory(self.parent, "Select a scan folder")
+            else :
+                surface_folder = QFileDialog.getOpenFileName(self.parent,'Open a file',)
             self.ui.LineEditPatient.setText(surface_folder)
+
         elif nom=="Output":
+            surface_folder = qt.QFileDialog.getExistingDirectory(self.parent, "Select a scan folder")
             self.ui.LineEditOutput.setText(surface_folder)
         
 
@@ -363,6 +370,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Run processing when user clicks "Apply" button.
         """
         if self.CheckGoodEntre():
+
             self.ui.progressBar.setVisible(True)
             self.ui.progressBar.setEnabled(True)
             self.ui.progressBar.setTextVisible(True)
@@ -470,15 +478,18 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.LineEditOutput.setText("")
                 self.ui.LineEditPatient.setText("")
                 self.ui.LineEditMatrix.setText("")
-                self.ui.ComboBox.setCurrentIndex(1)
+                self.ui.ComboBoxMatrix.setCurrentIndex(1)
+                self.ui.ComboBoxPatient.setCurrentIndex(1)
                 
     
 
     
     def CheckGoodEntre(self):
 
-        if self.ui.ComboBox.currentIndex==1 :  # folder option
+        if self.ui.ComboBoxPatient.currentIndex==1 :  # folder option
             self.dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj','.nii.gz')
+
+        if self.ui.ComboBoxMatrix.currentIndex==1 :  # folder option
             dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
 
         warning_text = ""
@@ -486,33 +497,42 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             warning_text = warning_text + "Enter folder output" + "\n"
     
         if self.ui.LineEditPatient.text=="":
-            if self.ui.ComboBox.currentIndex==1 : # folder option
+            if self.ui.ComboBoxPatient.currentIndex==1 : # folder option
                 warning_text = warning_text + "Enter folder patients" + "\n"
-            elif self.ui.ComboBox.currentIndex==0 : # file option
+            elif self.ui.ComboBoxPatient.currentIndex==0 : # file option
                 warning_text = warning_text + "Enter file patient" + "\n"
         else :
-            if self.ui.ComboBox.currentIndex==1 :
+            if self.ui.ComboBoxPatient.currentIndex==1 : #folder option
                 if len(self.dico_patient['.vtk'])==0 and len(self.dico_patient['.vtp']) and len(self.dico_patient['.stl']) and len(self.dico_patient['.off']) and len(self.dico_patient['.obj']) and len(self.dico_patient['.nii.gz']) :
                     warning_text = warning_text + "Folder empty or wrong type of file patient" + "\n"
                     warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj / .nii.gz" + "\n"
-            elif self.ui.ComboBox.currentIndex==0 : # file option
+            elif self.ui.ComboBoxPatient.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditPatient.text))
-                if extension != ".vtk" and extension != ".vtp" and extension != ".stl" and extension != ".off" and extension != ".obj" :
+                print(f"extension : {extension}")
+                print(f"fname : {fname}")
+                try : 
+                    fname, extension2 = os.path.splitext(os.path.basename(fname))
+                    extension = extension2+extension
+                except : 
+                    print("not a .nii.gz")
+                print(f"extension2 : {extension2}")
+                print(f"extension : {extension}")
+                if extension != ".vtk" and extension != ".vtp" and extension != ".stl" and extension != ".off" and extension != ".obj" and extension != ".nii.gz" :
                         warning_text = warning_text + "Wrong type of file patient detected" + "\n"
                         warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj / .nii.gz" + "\n"
         
 
         if self.ui.LineEditMatrix.text=="":
-            if self.ui.ComboBox.currentIndex==1 : # folder option
+            if self.ui.ComboBoxMatrix.currentIndex==1 : # folder option
                 warning_text = warning_text + "Enter folder matrix" + "\n"
-            elif self.ui.ComboBox.currentIndex==0 : # file option
+            elif self.ui.ComboBoxMatrix.currentIndex==0 : # file option
                 warning_text = warning_text + "Enter file matrix" + "\n"
         else :
-            if self.ui.ComboBox.currentIndex==1 :
+            if self.ui.ComboBoxMatrix.currentIndex==1 :
                 if len(dico_matrix['.npy'])==0 and len(dico_matrix['.h5'])==0 and len(dico_matrix['.tfm'])==0 and len(dico_matrix['.mat'])==0 and len(dico_matrix['.txt'])==0 :
                     warning_text = warning_text + "Folder empty or wrong type of files matrix " + "\n"
                     warning_text = warning_text + "File authorized : .npy / .h5 / .tfm / . mat / .txt" + "\n"
-            elif self.ui.ComboBox.currentIndex==0 : # file option
+            elif self.ui.ComboBoxMatrix.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditMatrix.text))
                 if extension != ".npy"  and extension != ".h5" and extension != ".tfm" and extension != ".mat" and extension != ".txt":
                         warning_text = warning_text + "Wrong type of file matrix detect" + "\n"

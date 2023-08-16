@@ -24,10 +24,12 @@ def main(args):
     ## Apply matrix on files != .nii.gz 
     ## Use the function in VTK_tools to apply the matrix on each files and saved them
     if path_patient_input.is_file() and path_matrix_intput.is_file():
-        surf = amu.ReadSurf(args.path_patient_intput)
-        matrix = amu.ReadMatrix(args.path_matrix_intput)
-        new_surf=amu.TransformSurf(surf,matrix)
-        amu.WriteSurf(new_surf,args.path_patient_output,args.path_patient_intput,args.suffix)
+        fname, extension = os.path.splitext(os.path.basename(args.path_patient_intput))
+        if extension == ".vtk" or extension == ".vtp" or extension == ".stl" or extension == ".off" or extension == ".obj" :
+            surf = amu.ReadSurf(args.path_patient_intput)
+            matrix = amu.ReadMatrix(args.path_matrix_intput)
+            new_surf=amu.TransformSurf(surf,matrix)
+            amu.WriteSurf(new_surf,args.path_patient_output,args.path_patient_intput,args.suffix)
 
     elif path_patient_input.is_dir() and path_matrix_intput.is_dir() : # folder option
             dico_patient=amu.search(args.path_patient_intput,'.vtk','.vtp','.stl','.off','.obj')
@@ -79,7 +81,11 @@ def main(args):
 
     splits = np.array_split(list(patients.keys()),nb_worker)
     
-    processess = [mp.Process(target=amu.ApplyMatrixGZ,args=(patients,keys,args.path_patient_intput,args.path_patient_output,i,nb_scan_done,args.logPath,idx,args.suffix)) for i,keys in enumerate(splits)]
+    if path_patient_input.is_dir() : 
+        processess = [mp.Process(target=amu.ApplyMatrixGZ,args=(patients,keys,args.path_patient_intput,args.path_patient_output,i,nb_scan_done,args.logPath,idx,args.suffix)) for i,keys in enumerate(splits)]
+    
+    elif path_patient_input.is_file() : 
+        processess = [mp.Process(target=amu.ApplyMatrixGZ,args=(patients,keys,os.path.dirname(args.path_patient_intput),args.path_patient_output,i,nb_scan_done,args.logPath,idx,args.suffix)) for i,keys in enumerate(splits)]    
 
     for proc in processess: proc.start()
     for proc in processess: proc.join()
