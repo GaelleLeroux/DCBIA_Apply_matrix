@@ -74,10 +74,6 @@ def main(args):
     idxProcess = mp.Value('i',idx)
     check = mp.Process(target=amu.CheckSharedList,args=(nb_scan_done,nb_files,args.logPath,idxProcess)) 
     check.start()
-    print(f"idx : {idx}")
-    print(f"nb_files : {nb_files}")
-
-    print()
 
     splits = np.array_split(list(patients.keys()),nb_worker)
     

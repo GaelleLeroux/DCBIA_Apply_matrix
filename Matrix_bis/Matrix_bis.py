@@ -438,10 +438,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 
 
         if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed:
-            # process complete
             self.ui.applyButton.setEnabled(True)
-            # self.ui.label_info.setText("Number of processed files : "+str(self.progress)+"/"+str(self.nbFiles))
-            # print(f"self.progress : {self.progress}")
 
             if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
                 # error
@@ -486,11 +483,6 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
     def CheckGoodEntre(self):
 
-        if self.ui.ComboBoxPatient.currentIndex==1 :  # folder option
-            self.dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj','.nii.gz')
-
-        if self.ui.ComboBoxMatrix.currentIndex==1 :  # folder option
-            dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
 
         warning_text = ""
         if self.ui.LineEditOutput.text=="":
@@ -503,20 +495,17 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 warning_text = warning_text + "Enter file patient" + "\n"
         else :
             if self.ui.ComboBoxPatient.currentIndex==1 : #folder option
+                self.dico_patient=self.search(self.ui.LineEditPatient.text,'.vtk','.vtp','.stl','.off','.obj','.nii.gz')
                 if len(self.dico_patient['.vtk'])==0 and len(self.dico_patient['.vtp']) and len(self.dico_patient['.stl']) and len(self.dico_patient['.off']) and len(self.dico_patient['.obj']) and len(self.dico_patient['.nii.gz']) :
                     warning_text = warning_text + "Folder empty or wrong type of file patient" + "\n"
                     warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj / .nii.gz" + "\n"
             elif self.ui.ComboBoxPatient.currentIndex==0 : # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditPatient.text))
-                print(f"extension : {extension}")
-                print(f"fname : {fname}")
                 try : 
                     fname, extension2 = os.path.splitext(os.path.basename(fname))
                     extension = extension2+extension
                 except : 
                     print("not a .nii.gz")
-                print(f"extension2 : {extension2}")
-                print(f"extension : {extension}")
                 if extension != ".vtk" and extension != ".vtp" and extension != ".stl" and extension != ".off" and extension != ".obj" and extension != ".nii.gz" :
                         warning_text = warning_text + "Wrong type of file patient detected" + "\n"
                         warning_text = warning_text + "File authorized : .vtk / .vtp / .stl / .off / .obj / .nii.gz" + "\n"
@@ -529,6 +518,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 warning_text = warning_text + "Enter file matrix" + "\n"
         else :
             if self.ui.ComboBoxMatrix.currentIndex==1 :
+                dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
                 if len(dico_matrix['.npy'])==0 and len(dico_matrix['.h5'])==0 and len(dico_matrix['.tfm'])==0 and len(dico_matrix['.mat'])==0 and len(dico_matrix['.txt'])==0 :
                     warning_text = warning_text + "Folder empty or wrong type of files matrix " + "\n"
                     warning_text = warning_text + "File authorized : .npy / .h5 / .tfm / . mat / .txt" + "\n"

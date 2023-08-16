@@ -15,7 +15,6 @@ def CheckSharedList(shared_list,maxvalue,logPath,idxProcess):
             idxProcess.acquire()
             log_f.write(str(idxProcess.value))
         idxProcess.value +=1
-        # print(f"idxProcess.value : {idxProcess.value}")
         idxProcess.release()
         time.sleep(0.5)
 
