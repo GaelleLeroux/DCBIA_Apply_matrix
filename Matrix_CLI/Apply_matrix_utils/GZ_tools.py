@@ -7,7 +7,10 @@ from pathlib import Path
 
 
 
-def CheckSharedList(shared_list,maxvalue,logPath,idxProcess):
+def CheckSharedList(shared_list:list,maxvalue:int,logPath:str,idxProcess)->None:
+    """
+        Update the log files for the progress bar when a new files has been processed
+    """
     for i in tqdm(range(maxvalue)):
         while sum(shared_list) < i+1:
             time.sleep(0.1)
@@ -20,6 +23,9 @@ def CheckSharedList(shared_list,maxvalue,logPath,idxProcess):
 
 
 def CenterImage(img):
+    """
+        Center the image in input
+    """
 
     T = - np.array(img.TransformContinuousIndexToPhysicalPoint(np.array(img.GetSize())/2.0))
     translation = sitk.TranslationTransform(3)
@@ -55,7 +61,10 @@ def ResampleImage(image, transform):
 
     return resampled_image
 
-def ApplyMatrixGZ(patients,keys,input_path, out_path, num_worker=0, shared_list=None,logPath=None,idx=0,suffix=""):
+def ApplyMatrixGZ(patients:list,keys:list,input_path:str, out_path:str, num_worker=0, shared_list=None,logPath=None,idx=0,suffix=""):
+    """
+        Process the files in patients by applying their matrix and saved them
+    """
     for key in keys:
         try:
             transform = None
@@ -92,7 +101,14 @@ def ApplyMatrixGZ(patients,keys,input_path, out_path, num_worker=0, shared_list=
 
 
 
-def GetPatients(file_path,matrix_path):
+def GetPatients(file_path:str,matrix_path:str):
+    """
+        Return a dictionnary with the patients names for the key. Their .nii.gz files and their matrix.
+        exemple :
+        input : file_path matrix_path
+        output : 
+        ('patient1': {'scan':[file_path_1_patient1.nii.gz,file_path_2_patient1.nii.gz],'matrix':[matrix_path_1_patient1.tfm,matrix_path_2_patient1.tfm]})
+    """
     patients = {}
 
     if Path(file_path).is_dir():
@@ -142,6 +158,6 @@ def GetPatients(file_path,matrix_path):
     else : 
         for key in patients.keys() :
             patients[key]['matrix'].append(matrix)
-    
+
 
     return patients,len(files)

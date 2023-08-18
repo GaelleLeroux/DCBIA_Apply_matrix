@@ -53,7 +53,8 @@ def main(args):
                 for filename_matrix in list_matrix :
                     matrix = amu.ReadMatrix(os.path.join(args.path_matrix_intput,filename_matrix))
                     new_surf=amu.TransformSurf(surf,matrix)
-                
+
+                    # matrix_name = os.path.basename(matrix).split('.tfm')[0].split(key)[1]
                     if 'left' in filename_matrix.lower():
                         amu.WriteSurf(new_surf,output_path,filename_patient,"_Left"+args.suffix)
                         
@@ -67,7 +68,7 @@ def main(args):
 
     ## Apply matrix on files == .nii.gz 
     ## Call the function in GZ_tools to Apply the matrixs and to save the new files
-    ## The update of the file log for the progress bare is in the function ApplyMatrixGZ
+    ## The update of the file log for the progress bare is in the function CheckSharedList
     patients,nb_files = amu.GetPatients(args.path_patient_intput,args.path_matrix_intput)
     nb_worker = 6
     nb_scan_done = mp.Manager().list([0 for i in range(nb_worker)])

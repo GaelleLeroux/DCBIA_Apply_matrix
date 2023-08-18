@@ -1,3 +1,4 @@
+
 import logging
 import os
 
@@ -27,9 +28,9 @@ class Matrix_bis(ScriptedLoadableModule):
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = "Matrix_bis"  # TODO: make this more human readable by adding spaces
-        self.parent.categories = ["Tuto1"]  # TODO: set categories (folders where the module shows up in the module selector)
+        self.parent.categories = ["Apply_Matrix_bis"]  # TODO: set categories (folders where the module shows up in the module selector)
         self.parent.dependencies = []  # TODO: add here list of module names that this module requires
-        self.parent.contributors = ["John Doe (AnyWare Corp.)"]  # TODO: replace with "Firstname Lastname (Organization)"
+        self.parent.contributors = ["Leroux Gaelle"]  # TODO: replace with "Firstname Lastname (Organization)"
         # TODO: update with short description of the module and a link to online module documentation
         self.parent.helpText = """
 This is an example of scripted loadable module bundled in an extension.
@@ -141,20 +142,17 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
         self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
 
-        # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
-        # (in the selected parameter node).
+        # BUTTONS
         self.ui.SearchButtonMatrix.connect("clicked(bool)",partial(self.openFinder,"Matrix"))
         self.ui.SearchButtonPatient.connect("clicked(bool)",partial(self.openFinder,"Patient"))
         self.ui.SearchButtonOutput.connect("clicked(bool)",partial(self.openFinder,"Output"))
         self.ui.ButtonAutoFill.connect("clicked(bool)",self.Autofill)
-        
-
-        # Buttons
         self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
 
+        # VARIABLES
         self.log_path = os.path.join(slicer.util.tempDirectory(), 'process.log')
         self.time_log = 0 # for progress bar
         self.cliNode = None
@@ -168,13 +166,10 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.ComboBoxPatient.setCurrentIndex(1)
         self.ui.ComboBoxMatrix.setCurrentIndex(1)
 
-        
-
-
     def Autofill(self):
 
         #SCAN 47
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged_Original/Merged_Seg_Centered/Seg_Controls_per_patients/r_47")
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/VTK_test")
         
 
 
@@ -183,7 +178,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
         #MATRIX 47
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/VTK_Matrix_Oriented/Vtk_MA_Controls_per_patients_Or/r_47")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
 
 
 
@@ -195,6 +190,10 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     
     def openFinder(self,nom : str,_) -> None : 
+        """
+         Open finder to let the user choose is files or folder
+        """ 
+        
         
         if nom=="Matrix":
             if self.ui.ComboBoxMatrix.currentIndex==1:
@@ -359,7 +358,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         }
     
 
-    def onApplyButton(self,_):
+    def onApplyButton(self,_)->None:
         """
         Run processing when user clicks "Apply" button.
         """
@@ -387,7 +386,10 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 
             
 
-    def onProcessStarted(self):    
+    def onProcessStarted(self)->None:   
+        """
+        Initialize the variables and progress bar.
+        """ 
         if os.path.isdir(self.ui.LineEditPatient.text):
             self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj']) + len(self.dico_patient['.nii.gz'])
         else:
@@ -400,7 +402,10 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.progressBar.setTextVisible(True)
 
 
-    def onProcessUpdate(self,caller,event):
+    def onProcessUpdate(self,caller,event)->None:
+        """
+        Call at each event to update the progress bar.
+        """ 
     # check log file
         if os.path.isfile(self.log_path):
             time = os.path.getmtime(self.log_path)
@@ -463,8 +468,10 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
 
     
-    def CheckGoodEntre(self):
-
+    def CheckGoodEntre(self)->bool:
+        """
+        Check if the folder and/or files have the right type of files in entries, return true or false
+        """ 
 
         warning_text = ""
         if self.ui.LineEditOutput.text=="":
@@ -516,6 +523,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else :
             qt.QMessageBox.warning(self.parent, "Warning", warning_text)
             return False
+        
 
 
 #
@@ -555,7 +563,11 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
         if not parameterNode.GetParameter("Invert"):
             parameterNode.SetParameter("Invert", "false")
 
-    def process(self):
+    def process(self)->None:
+        """
+         Call the process with the parameters
+        """ 
+        
         parameters = {}
         
         parameters ["path_patient_intput"] = self.path_patient_intput
