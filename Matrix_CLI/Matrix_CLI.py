@@ -20,10 +20,9 @@ def main(args):
     ## Apply matrix on files != .nii.gz 
     ## Call the function in VTK_tools to Apply the matrixs and to save the new files
     ## The update of the file log for the progress bare is in the function CheckSharedListVTK
-    
+
     idx = 0
     patients,nb_files = amu.GetPatientsVTK(args.path_patient_intput,args.path_matrix_intput)
-    print(patients,nb_files)
     nb_worker = 6
     nb_scan_done = mp.Manager().list([0 for i in range(nb_worker)])
     idxProcess = mp.Value('i',idx)
@@ -31,7 +30,6 @@ def main(args):
     check.start()
 
     splits = np.array_split(list(patients.keys()),nb_worker)
-    print(f"splits : {splits}")
     
     if path_patient_input.is_dir() : 
         processess = [mp.Process(target=amu.ApplyMatrixVTK,args=(patients,keys,args.path_patient_intput,args.path_patient_output,i,nb_scan_done,args.logPath,idx,args.suffix)) for i,keys in enumerate(splits)]

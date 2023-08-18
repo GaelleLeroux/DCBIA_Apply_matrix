@@ -210,7 +210,6 @@ def GetPatientsVTK(file_path:str,matrix_path:str):
         for key in patients.keys() :
             patients[key]['matrix'].append(matrix_path)
 
-    print(patients)
     return patients,len(files)
 
 
