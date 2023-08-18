@@ -169,7 +169,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def Autofill(self):
 
         #SCAN 47
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/VTK_test")
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged_Right_and_MirroredLeft/Scans_Centered/Scans_Controls_per_patients/r_47/T1/")
         
 
 
@@ -178,7 +178,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
         #MATRIX 47
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/VTK_Matrix_Oriented/Vtk_MA_Controls_per_patients_Or/r_47/")
 
 
 
