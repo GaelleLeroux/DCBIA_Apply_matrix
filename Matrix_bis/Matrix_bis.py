@@ -416,7 +416,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 progressbar_value = (self.progress-1) /self.nbFiles * 100
                 if progressbar_value < 100 :
                     self.ui.progressBar.setValue(progressbar_value)
-                    self.ui.progressBar.setFormat(str(progressbar_value)+"%")
+                    self.ui.progressBar.setFormat(str(round(progressbar_value,2))+"%")
                 else:
                     self.ui.progressBar.setValue(99)
                     self.ui.progressBar.setFormat("99%")

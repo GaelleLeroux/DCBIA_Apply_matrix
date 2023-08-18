@@ -157,7 +157,7 @@ def GetPatients(file_path:str,matrix_path:str):
 
     else : 
         for key in patients.keys() :
-            patients[key]['matrix'].append(matrix)
+            patients[key]['matrix'].append(matrix_path)
 
 
     return patients,len(files)
