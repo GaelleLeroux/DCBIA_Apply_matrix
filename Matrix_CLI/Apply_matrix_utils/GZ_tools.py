@@ -110,6 +110,7 @@ def GetPatients(file_path:str,matrix_path:str):
         ('patient1': {'scan':[file_path_1_patient1.nii.gz,file_path_2_patient1.nii.gz],'matrix':[matrix_path_1_patient1.tfm,matrix_path_2_patient1.tfm]})
     """
     patients = {}
+    files=[]
 
     if Path(file_path).is_dir():
         files = search(file_path,".nii.gz")['.nii.gz']
@@ -129,16 +130,23 @@ def GetPatients(file_path:str,matrix_path:str):
             patients[file_pat]['scan'].append(file)
     
     else : 
-        files = [file_path]
-        file_pat = os.path.basename(file_path).split('_Seg')[0].split('_seg')[0].split('_Scan')[0].split('_scan')[0].split('_Or')[0].split('_OR')[0].split('_MAND')[0].split('_MD')[0].split('_MAX')[0].split('_MX')[0].split('_CB')[0].split('_lm')[0].split('_T2')[0].split('_T1')[0].split('_Cl')[0].split('.')[0].replace('.','')
-        for i in range(50):
-            file_pat=file_pat.split('_T'+str(i))[0]
+        fname, extension = os.path.splitext(os.path.basename(file_path))
+        try : 
+            fname, extension2 = os.path.splitext(os.path.basename(fname))
+            extension = extension2+extension
+        except : 
+            print("not a .nii.gz")
+        if extension=='.nii.gz':
+            files = [file_path]
+            file_pat = os.path.basename(file_path).split('_Seg')[0].split('_seg')[0].split('_Scan')[0].split('_scan')[0].split('_Or')[0].split('_OR')[0].split('_MAND')[0].split('_MD')[0].split('_MAX')[0].split('_MX')[0].split('_CB')[0].split('_lm')[0].split('_T2')[0].split('_T1')[0].split('_Cl')[0].split('.')[0].replace('.','')
+            for i in range(50):
+                file_pat=file_pat.split('_T'+str(i))[0]
 
-        if file_pat not in patients.keys():
-            patients[file_pat] = {}
-            patients[file_pat]['scan'] = []
-            patients[file_pat]['matrix'] = []
-        patients[file_pat]['scan'].append(file_path)    
+            if file_pat not in patients.keys():
+                patients[file_pat] = {}
+                patients[file_pat]['scan'] = []
+                patients[file_pat]['matrix'] = []
+            patients[file_pat]['scan'].append(file_path)    
 
     
     if Path(matrix_path).is_dir():
