@@ -12,6 +12,7 @@ import glob
 import numpy as np
 from qt import QFileDialog,QMessageBox
 from functools import partial
+import SimpleITK as sitk
 
 # import Apply_matrix_utils as amu
 #
@@ -26,7 +27,7 @@ class Matrix_bis(ScriptedLoadableModule):
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = "Matrix_bis"  # TODO: make this more human readable by adding spaces
-        self.parent.categories = ["Tuto"]  # TODO: set categories (folders where the module shows up in the module selector)
+        self.parent.categories = ["Tuto1"]  # TODO: set categories (folders where the module shows up in the module selector)
         self.parent.dependencies = []  # TODO: add here list of module names that this module requires
         self.parent.contributors = ["John Doe (AnyWare Corp.)"]  # TODO: replace with "Firstname Lastname (Organization)"
         # TODO: update with short description of the module and a link to online module documentation
@@ -172,25 +173,25 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def Autofill(self):
 
-        #SCAN 293
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged/Merged_Seg_Centered/Seg_Controls_per_patients/r_2/T1/r_2_T1_MAND_Seg.nii.gz")
+        #SCAN 47
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged_Original/Merged_Seg_Centered/Seg_Controls_per_patients/r_47")
         
 
 
-        #SEG 293
-        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Non_Oriented_Marcela/Segs_Non_Oriented/Seg_Controls_per_patients/r_293/T1")
+        #SEG 47
+        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged_Mirror/Merged_Seg_Centered/Seg_Controls_per_patients/r_47/T1/r_47_T1_MAND_Seg.nii.gz")
 
 
-        #MATRIX 293
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/VTK_Matrix_Marcela/Vtk_MA_Controls_per_patients_Or/r_2/r_2_T1_Left_MA.tfm")
+        #MATRIX 47
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/VTK_Matrix_Oriented/Vtk_MA_Controls_per_patients_Or/r_47")
 
 
 
         self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output")
         # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
         # self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
-        self.ui.ComboBoxPatient.setCurrentIndex(0)
-        self.ui.ComboBoxMatrix.setCurrentIndex(0)
+        self.ui.ComboBoxPatient.setCurrentIndex(1)
+        self.ui.ComboBoxMatrix.setCurrentIndex(1)
 
     
     def openFinder(self,nom : str,_) -> None : 
@@ -298,13 +299,6 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
         self._updatingGUIFromParameterNode = True
 
-        # Update node selectors and sliders
-        #self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
-        #self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-        #self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
-        #self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
-        #self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
-
         # Update buttons states and tooltips
         self.ui.applyButton.toolTip = "Apply Matrix"
         self.ui.applyButton.enabled = True
@@ -370,7 +364,6 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Run processing when user clicks "Apply" button.
         """
         if self.CheckGoodEntre():
-
             self.ui.progressBar.setVisible(True)
             self.ui.progressBar.setEnabled(True)
             self.ui.progressBar.setTextVisible(True)
@@ -385,7 +378,6 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
             self.logic.process()
-            #self.processObserver = self.logic.cliNode.AddObserver('ModifiedEvent',self.onProcessUpdate)
             self.addObserver(self.logic.cliNode,vtk.vtkCommand.ModifiedEvent,self.onProcessUpdate)
             self.onProcessStarted()
             
@@ -396,14 +388,8 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             
 
     def onProcessStarted(self):    
-        # self.ui.doneLabel.setHidden(True)
-        # self.ui.openOutSurfButton.setHidden(True)
-        # self.ui.cancelButton.setHidden(False)
-        # self.ui.cancelButton.setEnabled(True)
-        # self.ui.resetButton.setEnabled(False)
         if os.path.isdir(self.ui.LineEditPatient.text):
-            niiGzT1 = [f for f in self.dico_patient['.nii.gz'] if 'T1' in f]
-            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj']) + len(niiGzT1)
+            self.nbFiles = len(self.dico_patient[".vtk"]) + len(self.dico_patient['.vtp']) + len(self.dico_patient['.stl']) + len(self.dico_patient['.off']) + len(self.dico_patient['.obj']) + len(self.dico_patient['.nii.gz'])
         else:
             self.nbFiles = 1
         self.ui.progressBar.setValue(0)
@@ -412,10 +398,6 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.progressBar.setEnabled(True)
         self.ui.progressBar.setHidden(False)
         self.ui.progressBar.setTextVisible(True)
-        # self.ui.progressLabel.setHidden(False)
-
-        # qt.QSettings().setValue("TeethSeg_ModelPath",self.model)
-        # qt.QSettings().setValue("TeethSegVisited",1)
 
 
     def onProcessUpdate(self,caller,event):
