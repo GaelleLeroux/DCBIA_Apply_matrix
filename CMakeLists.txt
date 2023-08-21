@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3...3.19.7 FATAL_ERROR)
 
-project(Apply_matrix_bis)
+project(AutoMatrix)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
@@ -19,7 +19,7 @@ include(${Slicer_USE_FILE})
 
 #-----------------------------------------------------------------------------
 # Extension modules
-add_subdirectory(Matrix_bis)
+add_subdirectory(Matrix_CLI)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

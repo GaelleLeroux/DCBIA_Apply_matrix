@@ -216,6 +216,7 @@ def GetPatientsVTK(file_path:str,matrix_path:str):
     return patients,len(files)
 
 
+
 def ApplyMatrixVTK(patients:list,keys:list,input_path:str, out_path:str, num_worker=0, shared_list=None,logPath=None,idx=0,suffix=""):
     """
         Process the files in patients by applying their matrix and saved them
