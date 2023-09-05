@@ -1,6 +1,6 @@
 
 import logging
-import os
+import os,sys,time,zipfile,urllib.request,shutil
 
 import vtk
 
@@ -15,26 +15,28 @@ from qt import QFileDialog,QMessageBox
 from functools import partial
 import SimpleITK as sitk
 
-# import Apply_matrix_utils as amu
-#
-# Matrix_bis
-#
+from Matrix_CLI.Apply_matrix_utils.GZ_tools import GetPatients
+from Matrix_CLI.Apply_matrix_utils.VTK_tools import GetPatientsVTK
 
-class Matrix_bis(ScriptedLoadableModule):
+#
+# AutoMatrix
+#test
+
+class AutoMatrix(ScriptedLoadableModule):
     """Uses ScriptedLoadableModule base class, available at:
     https://github.com/Slicer/Slicer/blob/main/Base/Python/slicer/ScriptedLoadableModule.py
     """
 
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
-        self.parent.title = "Matrix_bis"  # TODO: make this more human readable by adding spaces
-        self.parent.categories = ["Apply_Matrix_bis"]  # TODO: set categories (folders where the module shows up in the module selector)
+        self.parent.title = "AutoMatrix"  # TODO: make this more human readable by adding spaces
+        self.parent.categories = ["Automated Dental Tools"]  # TODO: set categories (folders where the module shows up in the module selector)
         self.parent.dependencies = []  # TODO: add here list of module names that this module requires
         self.parent.contributors = ["Leroux Gaelle"]  # TODO: replace with "Firstname Lastname (Organization)"
         # TODO: update with short description of the module and a link to online module documentation
         self.parent.helpText = """
 This is an example of scripted loadable module bundled in an extension.
-See more information in <a href="https://github.com/organization/projectname#Matrix_bis">module documentation</a>.
+See more information in <a href="https://github.com/organization/projectname#AutoMatrix">module documentation</a>.
 """
         # TODO: replace with organization, grant and thanks
         self.parent.acknowledgementText = """
@@ -63,44 +65,44 @@ def registerSampleData():
     # To ensure that the source code repository remains small (can be downloaded and installed quickly)
     # it is recommended to store data sets that are larger than a few MB in a Github release.
 
-    # Matrix_bis1
+    # AutoMatrix1
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         # Category and sample name displayed in Sample Data module
-        category='Matrix_bis',
-        sampleName='Matrix_bis1',
+        category='AutoMatrix',
+        sampleName='AutoMatrix1',
         # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
         # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
-        thumbnailFileName=os.path.join(iconsPath, 'Matrix_bis1.png'),
+        thumbnailFileName=os.path.join(iconsPath, 'AutoMatrix1.png'),
         # Download URL and target file name
         uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
-        fileNames='Matrix_bis1.nrrd',
+        fileNames='AutoMatrix1.nrrd',
         # Checksum to ensure file integrity. Can be computed by this command:
         #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
         checksums='SHA256:998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95',
         # This node name will be used when the data set is loaded
-        nodeNames='Matrix_bis1'
+        nodeNames='AutoMatrix1'
     )
 
-    # Matrix_bis2
+    # AutoMatrix2
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         # Category and sample name displayed in Sample Data module
-        category='Matrix_bis',
-        sampleName='Matrix_bis2',
-        thumbnailFileName=os.path.join(iconsPath, 'Matrix_bis2.png'),
+        category='AutoMatrix',
+        sampleName='AutoMatrix2',
+        thumbnailFileName=os.path.join(iconsPath, 'AutoMatrix2.png'),
         # Download URL and target file name
         uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        fileNames='Matrix_bis2.nrrd',
+        fileNames='AutoMatrix2.nrrd',
         checksums='SHA256:1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97',
         # This node name will be used when the data set is loaded
-        nodeNames='Matrix_bis2'
+        nodeNames='AutoMatrix2'
     )
 
 
 #
-# Matrix_bisWidget
+# AutoMatrixWidget
 #
 
-class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
+class AutoMatrixWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     """Uses ScriptedLoadableModuleWidget base class, available at:
     https://github.com/Slicer/Slicer/blob/main/Base/Python/slicer/ScriptedLoadableModule.py
     """
@@ -123,7 +125,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Load widget from .ui file (created by Qt Designer).
         # Additional widgets can be instantiated manually and added to self.layout.
-        uiWidget = slicer.util.loadUI(self.resourcePath('UI/Matrix_bis.ui'))
+        uiWidget = slicer.util.loadUI(self.resourcePath('UI/AutoMatrix.ui'))
         self.layout.addWidget(uiWidget)
         self.ui = slicer.util.childWidgetVariables(uiWidget)
 
@@ -134,7 +136,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Create logic class. Logic implements all computations that should be possible to run
         # in batch mode, without a graphical user interface.
-        self.logic = Matrix_bisLogic()
+        self.logic = AutoMatrixLogic()
 
         # Connections
 
@@ -148,6 +150,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.SearchButtonOutput.connect("clicked(bool)",partial(self.openFinder,"Output"))
         self.ui.ButtonAutoFill.connect("clicked(bool)",self.Autofill)
         self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
+        self.ui.CheckBoxMirror.connect('clicked(bool)', self.Mirror)
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
@@ -166,25 +169,116 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.ComboBoxPatient.setCurrentIndex(1)
         self.ui.ComboBoxMatrix.setCurrentIndex(1)
 
+        self.ui.ButtonAutoFill.setVisible(True)
+
+    def Mirror(self):
+        if self.ui.CheckBoxMirror.isChecked():
+            self.ui.SearchButtonMatrix.setEnabled(False)
+            self.ui.LineEditMatrix.setEnabled(False)
+            self.ui.ComboBoxMatrix.setCurrentIndex(0)
+            self.ui.ComboBoxMatrix.setEnabled(False)
+            self.DownloadMirror()
+
+        else : 
+            self.ui.SearchButtonMatrix.setEnabled(True)
+            self.ui.LineEditMatrix.setEnabled(True)
+            self.ui.ComboBoxMatrix.setCurrentIndex(1)
+            self.ui.ComboBoxMatrix.setEnabled(True)
+            self.ui.LineEditMatrix.setText("")
+
+
+    def DownloadUnzip(self, url, directory, folder_name=None, num_downl=1, total_downloads=1):
+        """Function to download and unzip a file from a url with a progress bar"""
+        out_path = os.path.join(directory, folder_name)
+
+        if not os.path.exists(out_path):
+            # print("Downloading {}...".format(folder_name.split(os.sep)[0]))
+            os.makedirs(out_path)
+
+            temp_path = os.path.join(directory, "temp.zip")
+
+            # Download the zip file from the url
+            with urllib.request.urlopen(url) as response, open(
+                temp_path, "wb"
+            ) as out_file:
+                # Pop up a progress bar with a QProgressDialog
+                progress = qt.QProgressDialog(
+                    "Downloading {} (File {}/{})".format(
+                        folder_name.split(os.sep)[0], num_downl, total_downloads
+                    ),
+                    "Cancel",
+                    0,
+                    100,
+                    self.parent,
+                )
+                progress.setCancelButton(None)
+                progress.setWindowModality(qt.Qt.WindowModal)
+                progress.setWindowTitle(
+                    "Downloading {}...".format(folder_name.split(os.sep)[0])
+                )
+                # progress.setWindowFlags(qt.Qt.WindowStaysOnTopHint)
+                progress.show()
+                length = response.info().get("Content-Length")
+                if length:
+                    length = int(length)
+                    blocksize = max(4096, length // 100)
+                    read = 0
+                    while True:
+                        buffer = response.read(blocksize)
+                        if not buffer:
+                            break
+                        read += len(buffer)
+                        out_file.write(buffer)
+                        progress.setValue(read * 100.0 / length)
+                        qt.QApplication.processEvents()
+                shutil.copyfileobj(response, out_file)
+
+            # Unzip the file
+            with zipfile.ZipFile(temp_path, "r") as zip:
+                zip.extractall(out_path)
+
+            # Delete the zip file
+            os.remove(temp_path)
+
+        return out_path
+
+
+    def DownloadMirror(self):
+        url = "https://github.com/GaelleLeroux/DCBIA_Apply_matrix/releases/download/AutoMatrixMirror/Mirror.zip"
+        name = "Mirror_matrix"
+
+        documentsLocation = qt.QStandardPaths.DocumentsLocation
+        self.documents = qt.QStandardPaths.writableLocation(documentsLocation)
+        self.SlicerDownloadPath = os.path.join(
+            self.documents,
+            slicer.app.applicationName + "Downloads",
+        )
+        self.isDCMInput = False
+        if not os.path.exists(self.SlicerDownloadPath):
+            os.makedirs(self.SlicerDownloadPath)
+
+        scan_folder = self.DownloadUnzip(
+                url=url,
+                directory=os.path.join(self.SlicerDownloadPath),
+                folder_name=os.path.join(name)
+                if not self.isDCMInput
+                else os.path.join(name),
+            )
+        self.ui.LineEditMatrix.setText(os.path.join(scan_folder,"Mirror/Matrix_mirror.tfm"))
+
     def Autofill(self):
 
-        #SCAN 47
-        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged_Right_and_MirroredLeft/Scans_Centered/Scans_Controls_per_patients/r_47/T1/")
-        
-
-
         #SEG 47
-        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Centered_Merged_Mirror/Merged_Seg_Centered/Seg_Controls_per_patients/r_47/T1/r_47_T1_MAND_Seg.nii.gz")
+        self.ui.LineEditPatient.setText("/home/luciacev/Desktop/AutoMatrix/AutoMatrixRelease4/r_2_patient_files")
 
 
         #MATRIX 47
-        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/VTK_Matrix_Oriented/Vtk_MA_Controls_per_patients_Or/r_47/")
+        self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/AutoMatrix/AutoMatrixRelease4/r_2_matrix")
 
 
 
-        self.ui.LineEditOutput.setText("/home/luciacev/Desktop/Gaelle/output")
-        # self.ui.LineEditPatient.setText("/home/luciacev/Desktop/Gaelle/Test_file_Full-IOS")
-        # self.ui.LineEditMatrix.setText("/home/luciacev/Desktop/Gaelle/Matrix_test")
+        self.ui.LineEditOutput.setText("/home/luciacev/Desktop/AutoMatrix/output")
+
         self.ui.ComboBoxPatient.setCurrentIndex(1)
         self.ui.ComboBoxMatrix.setCurrentIndex(1)
 
@@ -368,22 +462,137 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.ui.progressBar.setTextVisible(True)
             
             self.ui.label_info.setVisible(True)
-        
-            self.logic = Matrix_bisLogic(self.ui.LineEditPatient.text,
+            output = self.ui.LineEditOutput.text
+            input = self.ui.LineEditPatient.text
+            suffix = self.ui.LineEditSuffix.text
+            self.logic = AutoMatrixLogic(self.ui.LineEditPatient.text,
                                             self.ui.LineEditMatrix.text,
                                             self.ui.LineEditOutput.text, 
                                             self.ui.LineEditSuffix.text,
                                             self.log_path)
-
+            
 
             self.logic.process()
             self.addObserver(self.logic.cliNode,vtk.vtkCommand.ModifiedEvent,self.onProcessUpdate)
             self.onProcessStarted()
-            
-                            
-                    
 
-                
+            
+           
+
+                            
+
+        
+    def ProcessVolume(self)->None:
+        patients,nb_files = GetPatients(self.ui.LineEditPatient.text,self.ui.LineEditMatrix.text)
+
+        if nb_files!=0:
+            for key,values in patients.items():
+                for scan in values['scan']:
+                    image = slicer.util.loadVolume(scan)
+                    for matrix in values['matrix']:
+                        try:
+                            tform = slicer.util.loadTransform(matrix)
+                            image.SetAndObserveTransformNodeID(tform.GetID())
+                            image.HardenTransform()
+                            outpath = scan.replace(self.ui.LineEditPatient.text,self.ui.LineEditOutput.text)
+                            try : 
+                                matrix_name = os.path.basename(matrix).split('.tfm')[0].split('.mat')[0].split('.h5')[0].split('.npy')[0].split('.tfm')[0].split('.txt')[0].split(key)[1]
+                            except : 
+                                print('Impossible to extract the name of the matrix')
+                                matrix_name="matrix_name"
+                            
+                            if not os.path.exists(os.path.dirname(outpath)):
+                                os.makedirs(os.path.dirname(outpath))
+
+                            slicer.util.saveNode(image,outpath.split('.nii.gz')[0]+self.ui.LineEditSuffix.text+matrix_name+'.nii.gz')
+
+                        except:
+                            print("An issue occured")
+                            pass
+                    self.UpdateProgressBar(False)
+                    slicer.mrmlScene.Clear(0)
+
+        patients,nb_files = GetPatientsVTK(self.ui.LineEditPatient.text,self.ui.LineEditMatrix.text)
+
+        if nb_files!=0:
+            for key,values in patients.items():
+                for scan in values['scan']:
+                    model = slicer.util.loadModel(scan)
+                    for matrix in values['matrix']:
+                        try:
+                            tform = slicer.util.loadTransform(matrix)
+                            # tform = np.load(matrix)
+                            model.SetAndObserveTransformNodeID(tform.GetID())
+                            model.HardenTransform()
+                            outpath = scan.replace(self.ui.LineEditPatient.text,self.ui.LineEditOutput.text)
+                            try : 
+                                matrix_name = os.path.basename(matrix).split('.tfm')[0].split('.mat')[0].split('.h5')[0].split('.npy')[0].split('.tfm')[0].split('.txt')[0].split(key)[1]
+                            except : 
+                                print('Impossible to extract the name of the matrix')
+                                matrix_name="matrix_name"
+                            
+                            if not os.path.exists(os.path.dirname(outpath)):
+                                os.makedirs(os.path.dirname(outpath))
+
+                            fname, extension = os.path.splitext(os.path.basename(scan))
+                            extension = extension.lower()
+
+                            slicer.util.saveNode(model,outpath.split(extension)[0]+self.ui.LineEditSuffix.text+matrix_name+extension)
+
+                        except:
+                            print("An issue occured")
+                            pass
+                    self.UpdateProgressBar(False)
+                    slicer.mrmlScene.Clear(0)
+
+        
+
+
+
+              
+
+    def UpdateProgressBar(self,end:bool)->None:
+        if not end:
+            self.progress+=1
+            progressbar_value = (self.progress-1) /self.nbFiles * 100
+            if progressbar_value < 100 :
+                self.ui.progressBar.setValue(progressbar_value)
+                self.ui.progressBar.setFormat(str(round(progressbar_value,2))+"%")
+            else:
+                self.ui.progressBar.setValue(99)
+                self.ui.progressBar.setFormat("99%")
+            self.ui.label_info.setText("Number of processed files : "+str(self.progress-1)+"/"+str(self.nbFiles))
+
+        else : 
+            # success
+            print('PROCESS DONE.')
+            print(self.logic.cliNode.GetOutputText())
+            self.ui.progressBar.setValue(100)
+            self.ui.progressBar.setFormat("100%")
+
+            # qt.QMessageBox.information(self.parent,"Matrix applied with sucess")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+        
+            # setting message for Message Box
+            msg.setText("Matrix applied with success")
+            
+            # setting Message box window title
+            msg.setWindowTitle("Information")
+            
+            # declaring buttons on Message Box
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+
+            self.ui.progressBar.setVisible(False)
+            self.ui.label_info.setVisible(False)
+            self.ui.LineEditOutput.setText("")
+            self.ui.LineEditPatient.setText("")
+            self.ui.LineEditMatrix.setText("")
+            self.ui.ComboBoxMatrix.setCurrentIndex(1)
+            self.ui.ComboBoxPatient.setCurrentIndex(1)
+
+
             
 
     def onProcessStarted(self)->None:   
@@ -400,6 +609,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.progressBar.setEnabled(True)
         self.ui.progressBar.setHidden(False)
         self.ui.progressBar.setTextVisible(True)
+        self.ui.progressBar.setFormat("0%")
 
 
     def onProcessUpdate(self,caller,event)->None:
@@ -424,7 +634,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 
                 
 
-        if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed:
+        if self.logic.cliNode.GetStatus() & self.logic.cliNode.Completed :
             self.ui.applyButton.setEnabled(True)
 
             if self.logic.cliNode.GetStatus() & self.logic.cliNode.ErrorsMask:
@@ -432,7 +642,7 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 errorText = self.logic.cliNode.GetErrorText()
                 print("CLI execution failed: \n \n" + errorText)
                 msg = qt.QMessageBox()
-                msg.setText(f'There was an error during the process:\n \n {errorText} ')
+                msg.setText(f'There was an error during the process :\n \n {errorText} ')
                 msg.setWindowTitle("Error")
                 msg.exec_()
 
@@ -440,30 +650,9 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 # success
                 print('PROCESS DONE.')
                 print(self.logic.cliNode.GetOutputText())
-                self.ui.progressBar.setValue(100)
-                self.ui.progressBar.setFormat("100%")
 
-                #qt.QMessageBox.information(self.parent,"Matrix applied with sucess")
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Information)
-            
-                # setting message for Message Box
-                msg.setText("Matrix applied with success")
-                
-                # setting Message box window title
-                msg.setWindowTitle("Information")
-                
-                # declaring buttons on Message Box
-                msg.setStandardButtons(QMessageBox.Ok)
-                msg.exec_()
-
-                self.ui.progressBar.setVisible(False)
-                self.ui.label_info.setVisible(False)
-                self.ui.LineEditOutput.setText("")
-                self.ui.LineEditPatient.setText("")
-                self.ui.LineEditMatrix.setText("")
-                self.ui.ComboBoxMatrix.setCurrentIndex(1)
-                self.ui.ComboBoxPatient.setCurrentIndex(1)
+                self.ProcessVolume()
+                self.UpdateProgressBar(True)
                 
     
 
@@ -503,15 +692,15 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self.ui.LineEditMatrix.text=="":
             if self.ui.ComboBoxMatrix.currentIndex==1 : # folder option
                 warning_text = warning_text + "Enter folder matrix" + "\n"
-            elif self.ui.ComboBoxMatrix.currentIndex==0 : # file option
+            elif self.ui.ComboBoxMatrix.currentIndex==0 and self.ui.CheckBoxMirror.isChecked()==False : # file option
                 warning_text = warning_text + "Enter file matrix" + "\n"
         else :
-            if self.ui.ComboBoxMatrix.currentIndex==1 :
+            if self.ui.ComboBoxMatrix.currentIndex==1 : # folder option
                 dico_matrix=self.search(self.ui.LineEditMatrix.text,'.npy','.h5','.tfm','.mat','.txt')
                 if len(dico_matrix['.npy'])==0 and len(dico_matrix['.h5'])==0 and len(dico_matrix['.tfm'])==0 and len(dico_matrix['.mat'])==0 and len(dico_matrix['.txt'])==0 :
                     warning_text = warning_text + "Folder empty or wrong type of files matrix " + "\n"
                     warning_text = warning_text + "File authorized : .npy / .h5 / .tfm / . mat / .txt" + "\n"
-            elif self.ui.ComboBoxMatrix.currentIndex==0 : # file option
+            elif self.ui.ComboBoxMatrix.currentIndex==0 and self.ui.CheckBoxMirror.isChecked()==False: # file option
                 fname, extension = os.path.splitext(os.path.basename(self.ui.LineEditMatrix.text))
                 if extension != ".npy"  and extension != ".h5" and extension != ".tfm" and extension != ".mat" and extension != ".txt":
                         warning_text = warning_text + "Wrong type of file matrix detect" + "\n"
@@ -527,10 +716,10 @@ class Matrix_bisWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 #
-# Matrix_bisLogic
+# AutoMatrixLogic
 #
 
-class Matrix_bisLogic(ScriptedLoadableModuleLogic):
+class AutoMatrixLogic(ScriptedLoadableModuleLogic):
     """This class should implement all the actual
     computation done by your module.  The interface
     should be such that other python code can import
@@ -583,10 +772,10 @@ class Matrix_bisLogic(ScriptedLoadableModuleLogic):
    
 
 #
-# Matrix_bisTest
+# AutoMatrixTest
 #
 
-class Matrix_bisTest(ScriptedLoadableModuleTest):
+class AutoMatrixTest(ScriptedLoadableModuleTest):
     """
     This is the test case for your scripted module.
     Uses ScriptedLoadableModuleTest base class, available at:
@@ -602,9 +791,9 @@ class Matrix_bisTest(ScriptedLoadableModuleTest):
         """Run as few or as many tests as needed here.
         """
         self.setUp()
-        self.test_Matrix_bis1()
+        self.test_AutoMatrix1()
 
-    def test_Matrix_bis1(self):
+    def test_AutoMatrix1(self):
         """ Ideally you should have several levels of tests.  At the lowest level
         tests should exercise the functionality of the logic with different inputs
         (both valid and invalid).  At higher levels your tests should emulate the
@@ -622,7 +811,7 @@ class Matrix_bisTest(ScriptedLoadableModuleTest):
 
         import SampleData
         registerSampleData()
-        inputVolume = SampleData.downloadSample('Matrix_bis1')
+        inputVolume = SampleData.downloadSample('AutoMatrix1')
         self.delayDisplay('Loaded test data set')
 
         inputScalarRange = inputVolume.GetImageData().GetScalarRange()
@@ -634,7 +823,7 @@ class Matrix_bisTest(ScriptedLoadableModuleTest):
 
         # Test the module logic
 
-        logic = Matrix_bisLogic()
+        logic = AutoMatrixLogic()
 
         # Test algorithm with non-inverted threshold
         logic.process(inputVolume, outputVolume, threshold, True)

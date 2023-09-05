@@ -95,6 +95,10 @@ def WriteSurf(surf, output_folder:str,name:str,inname:str)->None:
             writer = vtk.vtkXMLPolyDataWriter()
         elif extension =='.obj':
             writer = vtk.vtkWriter()
+        elif extension == '.stl':
+            writer = vtk.vtkSTLWriter()
+        elif extension == '.off':
+            writer = vtk.vtkOFFWriter()
         writer.SetFileName(os.path.join(out_path,f"{name}{inname}{extension}"))
         writer.SetInputData(surf)
         writer.Update()
@@ -230,8 +234,10 @@ def ApplyMatrixVTK(patients:list,keys:list,input_path:str, out_path:str, num_wor
                 for matrix_path in patients[key]["matrix"] :
                     matrix = ReadMatrix(matrix_path)
                     new_surf=TransformSurf(surf,matrix)
-
-                    matrix_name = os.path.basename(matrix_path).split('.tfm')[0].split('.h5')[0].split('.npy')[0].split('.mat')[0].split('.txt')[0].split(key)[1]
+                    try : 
+                        matrix_name = os.path.basename(matrix_path).split('.tfm')[0].split('.h5')[0].split('.npy')[0].split('.mat')[0].split('.txt')[0].split(key)[1]
+                    except : 
+                        matrix_name = os.path.basename(matrix_path).split('.tfm')[0].split('.h5')[0].split('.npy')[0].split('.mat')[0].split('.txt')[0]
                     WriteSurf(new_surf,outpath,scan,suffix+matrix_name)
 
                 shared_list[num_worker] += 1
